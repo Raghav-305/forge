@@ -299,12 +299,6 @@ export const useEngineApps = () =>
   useQuery({ queryKey: ["apps"], queryFn: () => getApps() });
 ```
 
-### Option C — Lovable Cloud (Supabase)
-
-1. Enable Lovable Cloud (database + auth + storage + edge functions, no setup).
-2. Create tables: `apps (id, config jsonb)`, `events`, `diagnostics`.
-3. Replace hooks with `supabase.from('apps').select('*')`.
-
 ### CORS / Auth
 
 - Same-origin (Option B): no CORS needed.
@@ -364,5 +358,6 @@ bun dev          # http://localhost:8080
 ---
 
 Built as a runtime engine — your backend ships configs, Forge renders them.
-#   f o r g e  
+#   f o r g e 
+ 
  
