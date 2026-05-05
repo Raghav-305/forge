@@ -33,8 +33,8 @@ function useAsyncFetch<T>(producer: () => Promise<T>, deps: unknown[] = [], fall
   return state;
 }
 
-function normalizeField(field: any) {
-  const key = field?.key ?? field?.name ?? field?.id ?? crypto.randomUUID();
+function normalizeField(field: any, fallbackKey: string) {
+  const key = String(field?.key ?? field?.name ?? field?.id ?? fallbackKey);
 
   return {
     ...field,
@@ -47,36 +47,47 @@ function normalizeField(field: any) {
   };
 }
 
-function normalizeComponent(component: any) {
+function normalizeComponent(component: any, fallbackId: string) {
   const props = component?.props && typeof component.props === "object" ? component.props : {};
   const merged = {
     ...component,
     ...props
   };
 
+  const id = String(merged?.id ?? merged?.key ?? merged?.title ?? fallbackId);
+
   return {
     ...merged,
-    id: merged?.id ?? merged?.key ?? merged?.title ?? crypto.randomUUID(),
+    id,
     type: merged?.type ?? "table",
-    fields: Array.isArray(merged?.fields) ? merged.fields.map(normalizeField) : undefined,
+    fields: Array.isArray(merged?.fields)
+      ? merged.fields.map((field: any, i: number) => normalizeField(field, `${id}:field:${i}`))
+      : undefined,
     columns: Array.isArray(merged?.columns) ? merged.columns : undefined,
     cards: Array.isArray(merged?.cards) ? merged.cards : undefined
   };
 }
 
-function normalizePage(page: any) {
+function normalizePage(page: any, fallbackId: string) {
   const components = Array.isArray(page?.components) ? page.components : [];
   const inferredDataSource = components.find((component: any) => component?.dataSource || component?.entity)?.dataSource
     ?? components.find((component: any) => component?.dataSource || component?.entity)?.entity;
 
+  const pageId = String(page?.id ?? page?.slug ?? page?.title ?? fallbackId);
+
   return {
     ...page,
-    id: page?.id ?? page?.slug ?? page?.title ?? crypto.randomUUID(),
+    id: pageId,
     title: page?.title ?? page?.name ?? "Untitled Page",
-    components: components.map((component: any) => normalizeComponent({
-      ...component,
-      dataSource: component?.dataSource ?? component?.entity ?? (component?.type === "form" ? inferredDataSource : undefined)
-    }))
+    components: components.map((component: any, i: number) =>
+      normalizeComponent(
+        {
+          ...component,
+          dataSource: component?.dataSource ?? component?.entity ?? (component?.type === "form" ? inferredDataSource : undefined)
+        },
+        `${pageId}:component:${i}`
+      )
+    )
   };
 }
 
@@ -109,7 +120,7 @@ function normalizeAppConfig(raw: any): AppConfig {
     name: raw?.name ?? config.name ?? "Untitled App",
     description: raw?.description ?? config.description,
     version: raw?.version ?? config.version,
-    pages: pages.map(normalizePage)
+    pages: pages.map((page: any, i: number) => normalizePage(page, `${raw?.slug ?? raw?.id ?? config?.slug ?? "app"}:page:${i}`))
   };
 }
 
