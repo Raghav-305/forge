@@ -56,6 +56,7 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
   const fields = config.fields ?? [];
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   if (fields.length === 0) {
     return (
@@ -69,6 +70,34 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
     setValues((p) => (p[k] === v ? p : { ...p, [k]: v }));
   }, []);
 
+  const submit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (saving) return;
+
+    const source = config.dataSource;
+    if (!source) {
+      setFormError("No data source configured for this form");
+      toast.error("No data source configured for this form");
+      return;
+    }
+
+    setSaving(true);
+    setFormError(null);
+    try {
+      await createEngineRecord(source, values, configSlug);
+      setValues({});
+      toast.success("Record created");
+    } catch (error: any) {
+      const message = error?.message || "The engine could not create this record";
+      setFormError(message);
+      toast.error("Create failed", {
+        description: message
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, [config.dataSource, configSlug, saving, values]);
+
   return (
     <Card className="glass-panel p-5">
       <div className="mb-4">
@@ -79,27 +108,7 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
       </div>
       <form
         className="grid gap-4 sm:grid-cols-2"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const source = config.dataSource;
-          if (!source) {
-            toast.error("No data source configured for this form");
-            return;
-          }
-
-          setSaving(true);
-          try {
-            await createEngineRecord(source, values, configSlug);
-            setValues({});
-            toast.success("Record created");
-          } catch (error: any) {
-            toast.error("Create failed", {
-              description: error?.message || "The engine could not create this record"
-            });
-          } finally {
-            setSaving(false);
-          }
-        }}
+        onSubmit={submit}
       >
         {fields.map((f) => (
           <FieldRow
@@ -114,6 +123,9 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
             {saving ? "Saving..." : "Submit"}
           </Button>
         </div>
+        {formError ? (
+          <p className="sm:col-span-2 text-xs text-destructive">{formError}</p>
+        ) : null}
       </form>
     </Card>
   );

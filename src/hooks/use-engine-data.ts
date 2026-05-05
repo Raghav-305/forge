@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { startTransition } from "react";
 import { API_BASE_URL, apiGet, apiPost } from "@/lib/api";
 import { mockApps, mockHealth, mockLogs } from "@/lib/mock-store";
 import type { AppConfig, Diagnostic, EventLog } from "@/lib/types";
@@ -188,7 +189,9 @@ export function useEngineData(source?: string, configSlug?: string) {
       // Unscoped events are ignored to prevent fan-out refresh storms that can freeze the UI.
       if (!changedSource) return;
       if (changedSource === "*" || changedSource === source) {
-        setRefreshKey((key) => key + 1);
+        startTransition(() => {
+          setRefreshKey((key) => key + 1);
+        });
       }
     };
 
@@ -245,7 +248,9 @@ export async function createEngineRecord(source: string, data: Record<string, un
     data
   });
 
-  window.dispatchEvent(new CustomEvent("engine-data-changed", { detail: { source } }));
+  window.setTimeout(() => {
+    window.dispatchEvent(new CustomEvent("engine-data-changed", { detail: { source } }));
+  }, 0);
   return response.data;
 }
 

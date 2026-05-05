@@ -34,8 +34,8 @@ export async function emitEvents(ctx: EngineContext): Promise<EngineContext> {
 
     const shouldPersistEvent =
       event.severity === 'error' ||
-      ctx.input.action !== 'list' ||
-      process.env.PERSIST_ENGINE_LIST_EVENTS === 'true';
+      process.env.PERSIST_ENGINE_EVENTS === 'true' ||
+      (ctx.input.action === 'list' && process.env.PERSIST_ENGINE_LIST_EVENTS === 'true');
 
     if (shouldPersistEvent) {
       prisma.eventLog.create({ data: event }).catch(console.error);

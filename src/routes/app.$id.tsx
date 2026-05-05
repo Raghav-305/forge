@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CSSProperties, useEffect, useMemo, useState } from "react";
+import { CSSProperties, startTransition, useEffect, useMemo, useState } from "react";
 import { useEngineApp } from "@/hooks/use-engine-data";
 import { LoadingState } from "@/components/states";
 import { RenderComponent } from "@/components/dynamic/registry";
@@ -169,7 +169,9 @@ function AuthPanel() {
 
       window.localStorage.setItem("token", result.token);
       setHasToken(true);
-      window.dispatchEvent(new CustomEvent("engine-data-changed", { detail: { source: "*" } }));
+      startTransition(() => {
+        window.dispatchEvent(new CustomEvent("engine-data-changed", { detail: { source: "*" } }));
+      });
       toast.success(mode === "register" ? "Account created" : "Signed in");
     } catch (error: any) {
       toast.error(mode === "register" ? "Register failed" : "Login failed", {
@@ -183,7 +185,9 @@ function AuthPanel() {
   function logout() {
     window.localStorage.removeItem("token");
     setHasToken(false);
-    window.dispatchEvent(new CustomEvent("engine-data-changed", { detail: { source: "*" } }));
+    startTransition(() => {
+      window.dispatchEvent(new CustomEvent("engine-data-changed", { detail: { source: "*" } }));
+    });
     toast.success("Signed out");
   }
 

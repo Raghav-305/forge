@@ -49,8 +49,11 @@ export async function executeDB(ctx: EngineContext): Promise<EngineContext> {
         const entityConfig = ctx.config.entities?.find((e: any) => e.slug === entity);
         if (entityConfig?.fields) {
           const missingFields = entityConfig.fields
-            .filter((f: any) => f.required && !data[f.name])
-            .map((f: any) => f.name);
+            .filter((f: any) => {
+              const fieldName = f.name ?? f.key;
+              return f.required && fieldName && !data[fieldName];
+            })
+            .map((f: any) => f.name ?? f.key);
 
           if (missingFields.length > 0) {
             throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
