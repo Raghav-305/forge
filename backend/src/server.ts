@@ -22,6 +22,7 @@ const allowedOrigins = frontendUrls
   ? frontendUrls.split(',').map(origin => origin.trim()).filter(Boolean)
   : [];
 const allowAllOrigins = allowedOrigins.includes('*') || allowedOrigins.length === 0;
+const vercelPreviewOriginPattern = /^https:\/\/forge-[a-z0-9-]+-raghavbhardwaj305-8776s-projects\.vercel\.app$/i;
 
 if (!frontendUrls) {
   console.warn('WARNING: FRONTEND_URL is not configured; CORS will allow all origins. Set FRONTEND_URL in production for tighter security.');
@@ -35,11 +36,16 @@ app.use(compression());
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowAllOrigins || allowedOrigins.includes(origin)) {
+    const isVercelPreview = typeof origin === 'string' && vercelPreviewOriginPattern.test(origin);
+    if (!origin || allowAllOrigins || allowedOrigins.includes(origin) || isVercelPreview) {
       return callback(null, true);
     }
 
-    console.warn(`Blocked CORS origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
+    const allowedMsg = [
+      ...allowedOrigins,
+      'Vercel previews: https://forge-<preview>-raghavbhardwaj305-8776s-projects.vercel.app'
+    ].join(', ');
+    console.warn(`Blocked CORS origin: ${origin}. Allowed: ${allowedMsg}`);
     return callback(new Error(`Origin ${origin} is not allowed by CORS`));
   },
   credentials: true,
