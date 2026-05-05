@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import type { ComponentConfig } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,42 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { createEngineRecord } from "@/hooks/use-engine-data";
+
+const FieldRow = memo(function FieldRow({
+  field,
+  value,
+  onChange,
+}: {
+  field: NonNullable<ComponentConfig["fields"]>[number];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className={field.type === "textarea" ? "sm:col-span-2" : ""}>
+      <Label className="mb-1.5 block text-xs">
+        {field.label}
+        {field.required && <span className="text-primary"> *</span>}
+      </Label>
+      {field.type === "textarea" ? (
+        <Textarea value={value} onChange={(e) => onChange(e.target.value)} required={field.required} />
+      ) : field.type === "select" ? (
+        <Select onValueChange={onChange} value={value}>
+          <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+          <SelectContent>
+            {(field.options ?? []).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ) : (
+        <Input
+          type={field.type ?? "text"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required={field.required}
+        />
+      )}
+    </div>
+  );
+});
 
 export function DynamicForm({ config }: { config: ComponentConfig }) {
   const fields = config.fields ?? [];
@@ -25,7 +61,9 @@ export function DynamicForm({ config }: { config: ComponentConfig }) {
     );
   }
 
-  const set = (k: string, v: string) => setValues((p) => ({ ...p, [k]: v }));
+  const set = useCallback((k: string, v: string) => {
+    setValues((p) => (p[k] === v ? p : { ...p, [k]: v }));
+  }, []);
 
   return (
     <Card className="glass-panel p-5">
@@ -60,30 +98,12 @@ export function DynamicForm({ config }: { config: ComponentConfig }) {
         }}
       >
         {fields.map((f) => (
-          <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
-            <Label className="mb-1.5 block text-xs">{f.label}{f.required && <span className="text-primary"> *</span>}</Label>
-            {f.type === "textarea" ? (
-              <Textarea
-                value={values[f.key] ?? ""}
-                onChange={(e) => set(f.key, e.target.value)}
-                required={f.required}
-              />
-            ) : f.type === "select" ? (
-              <Select onValueChange={(v) => set(f.key, v)} value={values[f.key]}>
-                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                <SelectContent>
-                  {(f.options ?? []).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                type={f.type ?? "text"}
-                value={values[f.key] ?? ""}
-                onChange={(e) => set(f.key, e.target.value)}
-                required={f.required}
-              />
-            )}
-          </div>
+          <FieldRow
+            key={f.key}
+            field={f}
+            value={values[f.key] ?? ""}
+            onChange={(v) => set(f.key, v)}
+          />
         ))}
         <div className="sm:col-span-2 flex justify-end">
           <Button disabled={saving} type="submit" className="bg-gradient-to-r from-primary to-[oklch(0.55_0.22_268)]">
