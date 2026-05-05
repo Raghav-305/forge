@@ -39,6 +39,7 @@ model AppData {
   updated_at     DateTime @updatedAt
 
   @@index([config_slug, entity_slug])
+  @@index([config_slug, config_version, entity_slug, created_at(sort: Desc)])
   @@index([owner_id])
   @@index([config_slug, entity_slug, owner_id])
   @@index([created_at])

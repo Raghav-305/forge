@@ -78,16 +78,16 @@ router.get('/stream', (req, res) => {
 
 router.get('/stats', async (req, res) => {
   try {
-    const { days = 7 } = req.query;
+    const days = Math.max(1, Math.min(parseInt(String(req.query.days || 7), 10) || 7, 90));
 
-    const stats = await prisma.$queryRaw`
+    const stats = await prisma.$queryRaw<any[]>`
       SELECT 
         event_type,
         severity,
         COUNT(*) as count,
         DATE(created_at) as date
       FROM "EventLog"
-      WHERE created_at > NOW() - (${parseInt(days as string)} || ' days')::INTERVAL
+      WHERE created_at > NOW() - (${days} || ' days')::INTERVAL
       GROUP BY event_type, severity, DATE(created_at)
       ORDER BY date DESC, count DESC
     `;
@@ -103,8 +103,8 @@ router.get('/stats', async (req, res) => {
     `;
 
     return res.json({
-      summary: summary[0],
-      timeline: stats,
+      summary: normalizeBigInts(summary[0]),
+      timeline: stats.map(normalizeBigInts),
       topEvents: await prisma.eventLog.groupBy({
         by: ['event_type'],
         _count: true,
@@ -116,6 +116,12 @@ router.get('/stats', async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
+function normalizeBigInts<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value, (_key, item) =>
+    typeof item === 'bigint' ? Number(item) : item
+  ));
+}
 
 router.get('/:id', async (req, res) => {
   try {

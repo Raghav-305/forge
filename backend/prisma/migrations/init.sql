@@ -3,16 +3,16 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 -- Create performance indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_app_data_payload_gin 
+CREATE INDEX IF NOT EXISTS idx_app_data_payload_gin 
 ON "AppData" USING GIN (payload);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_app_data_search 
+CREATE INDEX IF NOT EXISTS idx_app_data_search 
 ON "AppData" USING GIN (to_tsvector('english', payload::text));
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_event_log_data_gin 
+CREATE INDEX IF NOT EXISTS idx_event_log_data_gin 
 ON "EventLog" USING GIN (data);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_app_config_config_gin 
+CREATE INDEX IF NOT EXISTS idx_app_config_config_gin 
 ON "AppConfig" USING GIN (config);
 
 -- Create function for automatic updated_at
@@ -71,10 +71,15 @@ CREATE OR REPLACE VIEW dashboard_stats AS
 SELECT 
     COUNT(DISTINCT a.config_slug) as total_apps,
     COUNT(DISTINCT a.entity_slug) as total_entities,
-    COUNT(DISTINCT u.id) as total_users,
+    (SELECT COUNT(*) FROM "User") as total_users,
     COUNT(e.id) as total_events_24h,
-    AVG((a.payload->>'value')::numeric) as avg_record_value
+    AVG(
+        CASE
+            WHEN (a.payload->>'value') ~ '^-?[0-9]+(\.[0-9]+)?$'
+            THEN (a.payload->>'value')::numeric
+            ELSE NULL
+        END
+    ) as avg_record_value
 FROM "AppData" a
-CROSS JOIN "User" u
 LEFT JOIN "EventLog" e ON e.created_at > NOW() - INTERVAL '24 hours'
 WHERE a.created_at > NOW() - INTERVAL '30 days';

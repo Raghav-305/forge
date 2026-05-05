@@ -12,15 +12,15 @@ import eventRoutes from './routes/events';
 import { authMiddleware, optionalAuthMiddleware } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
+import { requestLogger } from './middleware/requestLogger';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Render (and most PaaS) run behind a proxy/load balancer and will set X-Forwarded-For.
-// express-rate-limit validates this header unless Express is configured to trust the proxy.
 app.set('trust proxy', 1);
+
 const frontendUrls = process.env.FRONTEND_URL?.trim();
 const allowedOrigins = frontendUrls
   ? frontendUrls.split(',').map(origin => origin.trim()).filter(Boolean)
@@ -29,7 +29,7 @@ const allowAllOrigins = allowedOrigins.includes('*') || allowedOrigins.length ==
 const vercelPreviewOriginPattern = /^https:\/\/forge-[a-z0-9-]+-raghavbhardwaj305-8776s-projects\.vercel\.app$/i;
 
 if (!frontendUrls) {
-  console.warn('WARNING: FRONTEND_URL is not configured; CORS will allow all origins. Set FRONTEND_URL in production for tighter security.');
+  console.warn('WARNING: FRONTEND_URL is not configured; CORS will allow all origins.');
 }
 
 app.use(helmet({
@@ -59,12 +59,23 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(requestLogger);
 
 app.use('/api', rateLimiter);
 
-app.get('/health', async (req, res) => {
-  const dbHealthy = await checkDatabaseConnection();
+let healthCache: { checkedAt: number; dbHealthy: boolean } | null = null;
+const HEALTH_CACHE_MS = 30_000;
 
+app.get('/health', async (_req, res) => {
+  const now = Date.now();
+  if (!healthCache || now - healthCache.checkedAt > HEALTH_CACHE_MS) {
+    healthCache = {
+      checkedAt: now,
+      dbHealthy: await checkDatabaseConnection(1)
+    };
+  }
+
+  const dbHealthy = healthCache.dbHealthy;
   res.json({
     status: dbHealthy ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
@@ -100,7 +111,7 @@ app.use((req, res) => {
 
 async function startServer() {
   try {
-    const dbConnected = await checkDatabaseConnection();
+    const dbConnected = await checkDatabaseConnection(3, { logSuccess: true });
 
     if (!dbConnected) {
       console.error('Failed to connect to database. Exiting...');
@@ -108,14 +119,14 @@ async function startServer() {
     }
 
     await prisma.$connect();
-    console.log('✅ Prisma connected');
+    console.log('Prisma connected');
 
     app.listen(PORT, () => {
-      console.log(`\n🚀 API Server running on http://localhost:${PORT}`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health`);
-      console.log(`⚡ Engine endpoint: POST http://localhost:${PORT}/api/engine`);
-      console.log(`🔐 Auth endpoint: POST http://localhost:${PORT}/api/auth/login`);
-      console.log('\n✨ Ready to accept requests\n');
+      console.log(`API Server running on http://localhost:${PORT}`);
+      console.log(`Health check: http://localhost:${PORT}/health`);
+      console.log(`Engine endpoint: POST http://localhost:${PORT}/api/engine`);
+      console.log(`Auth endpoint: POST http://localhost:${PORT}/api/auth/login`);
+      console.log('Ready to accept requests');
     });
   } catch (error) {
     console.error('Failed to start server:', error);

@@ -11,11 +11,16 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-export async function checkDatabaseConnection(retries: number = 3): Promise<boolean> {
+export async function checkDatabaseConnection(
+  retries: number = 3,
+  options: { logSuccess?: boolean } = {}
+): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
     try {
       await prisma.$queryRaw`SELECT 1`;
-      console.log('✅ Database connected');
+      if (options.logSuccess) {
+        console.log('Database connected');
+      }
       return true;
     } catch (error) {
       console.error(`Database connection attempt ${i + 1}/${retries} failed:`, error);
@@ -24,11 +29,11 @@ export async function checkDatabaseConnection(retries: number = 3): Promise<bool
       }
     }
   }
-  console.error('❌ Database connection failed after all retries');
+  console.error('Database connection failed after all retries');
   return false;
 }
 
 export async function disconnectDatabase() {
   await prisma.$disconnect();
-  console.log('📴 Database disconnected');
+  console.log('Database disconnected');
 }

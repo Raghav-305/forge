@@ -9,6 +9,12 @@ interface State<T> {
   error: Error | null;
 }
 
+const CACHE_TTL_MS = 30_000;
+let appsCache: { data: AppConfig[]; expiresAt: number } | null = null;
+let appsPromise: Promise<AppConfig[]> | null = null;
+let healthCache: { data: Diagnostic[]; expiresAt: number } | null = null;
+let healthPromise: Promise<Diagnostic[]> | null = null;
+
 function useAsyncFetch<T>(producer: () => Promise<T>, deps: unknown[] = [], fallback: T): State<T> {
   const [state, setState] = useState<State<T>>({ data: null, loading: true, error: null });
 
@@ -127,8 +133,26 @@ function normalizeAppConfig(raw: any): AppConfig {
 export function useEngineApps() {
   return useAsyncFetch<AppConfig[]>(
     async () => {
-      const apps = await apiGet<any[]>("/api/configs");
-      return apps.map(normalizeAppConfig);
+      const now = Date.now();
+      if (appsCache && appsCache.expiresAt > now) {
+        return appsCache.data;
+      }
+      if (appsPromise) {
+        return appsPromise;
+      }
+
+      appsPromise = (async () => {
+        try {
+          const apps = await apiGet<any[]>("/api/configs");
+          const data = apps.map(normalizeAppConfig);
+          appsCache = { data, expiresAt: Date.now() + CACHE_TTL_MS };
+          return data;
+        } finally {
+          appsPromise = null;
+        }
+      })();
+
+      return appsPromise;
     },
     [],
     mockApps
@@ -228,23 +252,41 @@ export async function createEngineRecord(source: string, data: Record<string, un
 export function useEngineHealth() {
   return useAsyncFetch<Diagnostic[]>(
     async () => {
-      const health = await apiGet<{ status: string; services: Record<string, string> }>("/health");
-      return [
-        {
-          level: health.status === "healthy" ? "info" : "warning",
-          message: `API status: ${health.status}`,
-          path: "/health"
-        },
-        {
-          level: health.services.database === "connected" ? "info" : "error",
-          message: `Database: ${health.services.database}`,
-          path: "database"
-        },
-        {
-          level: "info",
-          message: `Using backend at ${API_BASE_URL}`
+      const now = Date.now();
+      if (healthCache && healthCache.expiresAt > now) {
+        return healthCache.data;
+      }
+      if (healthPromise) {
+        return healthPromise;
+      }
+
+      healthPromise = (async () => {
+        try {
+          const health = await apiGet<{ status: string; services: Record<string, string> }>("/health");
+          const data: Diagnostic[] = [
+            {
+              level: health.status === "healthy" ? "info" : "warning",
+              message: `API status: ${health.status}`,
+              path: "/health"
+            },
+            {
+              level: health.services.database === "connected" ? "info" : "error",
+              message: `Database: ${health.services.database}`,
+              path: "database"
+            },
+            {
+              level: "info",
+              message: `Using backend at ${API_BASE_URL}`
+            }
+          ];
+          healthCache = { data, expiresAt: Date.now() + CACHE_TTL_MS };
+          return data;
+        } finally {
+          healthPromise = null;
         }
-      ];
+      })();
+
+      return healthPromise;
     },
     [],
     mockHealth
