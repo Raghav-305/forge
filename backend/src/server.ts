@@ -17,10 +17,15 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000,http://localhost:8080')
-  .split(',')
-  .map(origin => origin.trim())
-  .filter(Boolean);
+const frontendUrls = process.env.FRONTEND_URL?.trim();
+const allowedOrigins = frontendUrls
+  ? frontendUrls.split(',').map(origin => origin.trim()).filter(Boolean)
+  : [];
+const allowAllOrigins = allowedOrigins.includes('*') || allowedOrigins.length === 0;
+
+if (!frontendUrls) {
+  console.warn('WARNING: FRONTEND_URL is not configured; CORS will allow all origins. Set FRONTEND_URL in production for tighter security.');
+}
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
@@ -30,10 +35,11 @@ app.use(compression());
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowAllOrigins || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
+    console.warn(`Blocked CORS origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
     return callback(new Error(`Origin ${origin} is not allowed by CORS`));
   },
   credentials: true,
