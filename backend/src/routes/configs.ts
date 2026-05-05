@@ -8,6 +8,9 @@ const router = Router();
 
 router.get('/', async (req, res) => {
   try {
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || 20)), 1), 100);
+    const offset = Math.max(parseInt(String(req.query.offset || 0)), 0);
+
     const configs = await prisma.appConfig.findMany({
       where: {
         is_active: true
@@ -23,21 +26,32 @@ router.get('/', async (req, res) => {
         updated_at: true,
         config: true
       },
-      orderBy: { created_at: 'desc' }
+      orderBy: { created_at: 'desc' },
+      take: limit,
+      skip: offset
     });
 
-    return res.json(configs.map((item) => ({
-      id: item.id,
-      name: item.name,
-      slug: item.slug,
-      version: item.version,
-      description: item.description,
-      is_active: item.is_active,
-      created_at: item.created_at,
-      updated_at: item.updated_at,
-      pages: (item.config as any)?.pages ?? [],
-      config: item.config
-    })));
+    const total = await prisma.appConfig.count({ where: { is_active: true } });
+
+    return res.json({
+      data: configs.map((item) => ({
+        id: item.id,
+        name: item.name,
+        slug: item.slug,
+        version: item.version,
+        description: item.description,
+        is_active: item.is_active,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        pages: (item.config as any)?.pages ?? []
+      })),
+      pagination: {
+        limit,
+        offset,
+        total,
+        hasMore: offset + limit < total
+      }
+    });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }

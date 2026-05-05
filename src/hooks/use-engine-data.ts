@@ -144,7 +144,8 @@ export function useEngineApps() {
 
       appsPromise = (async () => {
         try {
-          const apps = await apiGet<any[]>("/api/configs");
+          const response = await apiGet<{ data?: any[]; pagination?: any } | any[]>("/api/configs");
+          const apps = Array.isArray(response) ? response : response?.data ?? [];
           const data = apps.map(normalizeAppConfig);
           appsCache = { data, expiresAt: Date.now() + CACHE_TTL_MS };
           return data;
