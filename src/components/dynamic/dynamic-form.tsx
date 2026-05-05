@@ -15,11 +15,11 @@ import { createEngineRecord } from "@/hooks/use-engine-data";
 const FieldRow = memo(function FieldRow({
   field,
   value,
-  onChange,
+  setFieldValue,
 }: {
   field: NonNullable<ComponentConfig["fields"]>[number];
   value: string;
-  onChange: (value: string) => void;
+  setFieldValue: (key: string, value: string) => void;
 }) {
   return (
     <div className={field.type === "textarea" ? "sm:col-span-2" : ""}>
@@ -28,9 +28,13 @@ const FieldRow = memo(function FieldRow({
         {field.required && <span className="text-primary"> *</span>}
       </Label>
       {field.type === "textarea" ? (
-        <Textarea value={value} onChange={(e) => onChange(e.target.value)} required={field.required} />
+        <Textarea
+          value={value}
+          onChange={(e) => setFieldValue(field.key, e.target.value)}
+          required={field.required}
+        />
       ) : field.type === "select" ? (
-        <Select onValueChange={onChange} value={value}>
+        <Select onValueChange={(v) => setFieldValue(field.key, v)} value={value}>
           <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
           <SelectContent>
             {(field.options ?? []).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
@@ -40,7 +44,7 @@ const FieldRow = memo(function FieldRow({
         <Input
           type={field.type ?? "text"}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => setFieldValue(field.key, e.target.value)}
           required={field.required}
         />
       )}
@@ -102,7 +106,7 @@ export function DynamicForm({ config }: { config: ComponentConfig }) {
             key={f.key}
             field={f}
             value={values[f.key] ?? ""}
-            onChange={(v) => set(f.key, v)}
+            setFieldValue={set}
           />
         ))}
         <div className="sm:col-span-2 flex justify-end">
