@@ -52,7 +52,7 @@ const FieldRow = memo(function FieldRow({
   );
 });
 
-export function DynamicForm({ config }: { config: ComponentConfig }) {
+export function DynamicForm({ config, configSlug }: { config: ComponentConfig; configSlug?: string }) {
   const fields = config.fields ?? [];
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -89,7 +89,7 @@ export function DynamicForm({ config }: { config: ComponentConfig }) {
 
           setSaving(true);
           try {
-            await createEngineRecord(source, values);
+            await createEngineRecord(source, values, configSlug);
             setValues({});
             toast.success("Record created");
           } catch (error: any) {

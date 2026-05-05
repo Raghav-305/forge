@@ -7,15 +7,17 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { AlertTriangle } from "lucide-react";
 
 type Renderer = ReactCT<{ config: ComponentConfig }>;
+type RenderProps = { config: ComponentConfig; configSlug?: string };
+type AppRenderer = ReactCT<RenderProps>;
 
-const registry: Record<string, Renderer> = {
+const registry: Record<string, AppRenderer> = {
   table: DynamicTable,
   form: DynamicForm,
   cards: DynamicCards,
 };
 
 export function registerComponent(type: string, renderer: Renderer) {
-  registry[type] = renderer;
+  registry[type] = renderer as AppRenderer;
 }
 
 function Fallback({ type }: { type: string }) {
@@ -30,11 +32,11 @@ function Fallback({ type }: { type: string }) {
   );
 }
 
-export function RenderComponent({ config }: { config: ComponentConfig }) {
+export function RenderComponent({ config, configSlug }: RenderProps) {
   const Comp = registry[config.type];
   return (
     <ErrorBoundary label={config.title ?? config.type}>
-      {Comp ? <Comp config={config} /> : <Fallback type={config.type} />}
+      {Comp ? <Comp config={config} configSlug={configSlug} /> : <Fallback type={config.type} />}
     </ErrorBoundary>
   );
 }

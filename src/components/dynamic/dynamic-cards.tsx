@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/states";
 import { TrendingUp } from "lucide-react";
 
-export function DynamicCards({ config }: { config: ComponentConfig }) {
+export function DynamicCards({ config }: { config: ComponentConfig; configSlug?: string }) {
   const cards = config.cards ?? [];
   if (cards.length === 0) {
     return <EmptyState label="No cards configured" />;

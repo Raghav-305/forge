@@ -153,7 +153,7 @@ function normalizePayloadRow(row: any): Record<string, unknown> {
   return row;
 }
 
-export function useEngineData(source?: string) {
+export function useEngineData(source?: string, configSlug?: string) {
   const [state, setState] = useState<State<Record<string, unknown>[]>>({ data: null, loading: true, error: null });
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -174,13 +174,14 @@ export function useEngineData(source?: string) {
 
   useEffect(() => {
     let cancelled = false;
+    if (!source || !configSlug) {
+      setState({ data: [], loading: false, error: null });
+      return;
+    }
+
     setState({ data: null, loading: true, error: null });
 
     async function load() {
-      if (!source) return [];
-      const configSlug = typeof window !== "undefined" ? window.localStorage.getItem("activeConfigSlug") : null;
-      if (!configSlug) return [];
-
       const response = await apiPost<{ success: boolean; data: any }>("/api/engine", {
         configSlug,
         action: "list",
@@ -203,13 +204,12 @@ export function useEngineData(source?: string) {
     return () => {
       cancelled = true;
     };
-  }, [source, refreshKey]);
+  }, [source, configSlug, refreshKey]);
 
   return state;
 }
 
-export async function createEngineRecord(source: string, data: Record<string, unknown>) {
-  const configSlug = typeof window !== "undefined" ? window.localStorage.getItem("activeConfigSlug") : null;
+export async function createEngineRecord(source: string, data: Record<string, unknown>, configSlug?: string) {
   if (!configSlug) {
     throw new Error("No active app selected");
   }

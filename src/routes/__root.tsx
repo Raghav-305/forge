@@ -51,7 +51,7 @@ function RootComponent() {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex flex-1 flex-col">
-          <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border/60 bg-background/60 px-4 backdrop-blur-md">
+          <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border/60 bg-background/95 px-4">
             <SidebarTrigger />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-success" />

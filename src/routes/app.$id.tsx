@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CSSProperties, useEffect, useState } from "react";
+import { CSSProperties, useEffect, useMemo, useState } from "react";
 import { useEngineApp } from "@/hooks/use-engine-data";
 import { LoadingState } from "@/components/states";
 import { RenderComponent } from "@/components/dynamic/registry";
@@ -19,16 +19,11 @@ export const Route = createFileRoute("/app/$id")({
 function AppViewer() {
   const { id } = Route.useParams();
   const { data: app, loading, error } = useEngineApp(id);
-  const pages = app?.pages ?? [];
+  const pages = useMemo(() => app?.pages ?? [], [app?.pages]);
+  const pageIds = useMemo(() => pages.map((page) => page.id).join("|"), [pages]);
+  const configSlug = app?.slug ?? id;
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const activePage = activePageId ? pages.find((p) => p.id === activePageId) : undefined;
-
-  useEffect(() => {
-    const activeSlug = app?.slug ?? id;
-    if (typeof window !== "undefined" && activeSlug) {
-      window.localStorage.setItem("activeConfigSlug", activeSlug);
-    }
-  }, [app?.slug, id]);
 
   useEffect(() => {
     if (!pages.length) {
@@ -36,7 +31,7 @@ function AppViewer() {
       return;
     }
     setActivePageId((prev) => (prev && pages.some((p) => p.id === prev) ? prev : pages[0].id));
-  }, [pages]);
+  }, [pageIds, pages]);
 
   if (loading) return <div className="p-8"><LoadingState label="Loading app config…" /></div>;
   if (error) {
@@ -110,7 +105,7 @@ function AppViewer() {
               <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{activePage.title}</h2>
               <div className={layoutClass(activePage.layout)}>
                 {(activePage.components ?? []).map((c) => (
-                  <RenderComponent key={c.id} config={c} />
+                  <RenderComponent key={c.id} config={c} configSlug={configSlug} />
                 ))}
               </div>
             </section>

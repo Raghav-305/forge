@@ -11,6 +11,11 @@ async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error: any) {
+    if (error?.name === 'AbortError') {
+      throw new Error('Request timed out. The backend did not respond in time.');
+    }
+    throw error;
   } finally {
     clearTimeout(id);
   }
@@ -29,10 +34,8 @@ export async function apiGet<T>(path: string): Promise<T> {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const response = await fetchWithTimeout(`${API_BASE_URL}${normalizedPath}`, {
     headers: {
-      'Content-Type': 'application/json',
       ...getAuthHeaders()
-    },
-    credentials: 'include'
+    }
   });
 
   if (!response.ok) {
@@ -51,7 +54,6 @@ export async function apiPost<T>(path: string, body: any): Promise<T> {
       'Content-Type': 'application/json',
       ...getAuthHeaders()
     },
-    credentials: 'include',
     body: JSON.stringify(body)
   });
 
