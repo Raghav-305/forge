@@ -81,12 +81,26 @@ function normalizePage(page: any) {
 }
 
 function normalizeAppConfig(raw: any): AppConfig {
-  const config = raw?.config && typeof raw.config === "object" ? raw.config : {};
+  // Backend stores config JSON under AppConfig.config (Prisma Json).
+  // Some endpoints or older versions may wrap the actual JSON as config.config.
+  const configContainer = raw?.config && typeof raw.config === "object" ? raw.config : {};
+  const config =
+    (configContainer as any)?.config && typeof (configContainer as any).config === "object"
+      ? (configContainer as any).config
+      : configContainer;
+
+  const pagesFromUiObject =
+    config?.ui?.pages && typeof config.ui.pages === "object"
+      ? Object.values(config.ui.pages)
+      : [];
+
   const pages = Array.isArray(raw?.pages)
     ? raw.pages
-    : Array.isArray(config.pages)
+    : Array.isArray(config?.pages)
       ? config.pages
-      : [];
+      : Array.isArray(pagesFromUiObject)
+        ? pagesFromUiObject
+        : [];
 
   return {
     ...config,
