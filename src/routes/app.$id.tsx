@@ -174,7 +174,7 @@ function AuthPanel() {
 
       window.localStorage.setItem("token", result.token);
       setHasToken(true);
-      window.dispatchEvent(new CustomEvent("engine-data-changed"));
+      window.dispatchEvent(new CustomEvent("engine-data-changed", { detail: { source: "*" } }));
       toast.success(mode === "register" ? "Account created" : "Signed in");
     } catch (error: any) {
       toast.error(mode === "register" ? "Register failed" : "Login failed", {
@@ -188,7 +188,7 @@ function AuthPanel() {
   function logout() {
     window.localStorage.removeItem("token");
     setHasToken(false);
-    window.dispatchEvent(new CustomEvent("engine-data-changed"));
+    window.dispatchEvent(new CustomEvent("engine-data-changed", { detail: { source: "*" } }));
     toast.success("Signed out");
   }
 

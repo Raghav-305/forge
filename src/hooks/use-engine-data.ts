@@ -160,7 +160,10 @@ export function useEngineData(source?: string) {
   useEffect(() => {
     const refresh = (event: Event) => {
       const changedSource = (event as CustomEvent<{ source?: string }>).detail?.source;
-      if (!changedSource || changedSource === source) {
+      // Only refresh if explicitly targeted to this source, or explicitly global ("*").
+      // Unscoped events are ignored to prevent fan-out refresh storms that can freeze the UI.
+      if (!changedSource) return;
+      if (changedSource === "*" || changedSource === source) {
         setRefreshKey((key) => key + 1);
       }
     };
