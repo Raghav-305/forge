@@ -20,6 +20,7 @@ function AppViewer() {
   const { id } = Route.useParams();
   const { data: app, loading, error } = useEngineApp(id);
   const pages = app?.pages ?? [];
+  const [activePageId, setActivePageId] = useState<string | null>(null);
 
   useEffect(() => {
     const activeSlug = app?.slug ?? id;
@@ -27,6 +28,14 @@ function AppViewer() {
       window.localStorage.setItem("activeConfigSlug", activeSlug);
     }
   }, [app?.slug, id]);
+
+  useEffect(() => {
+    if (!pages.length) {
+      setActivePageId(null);
+      return;
+    }
+    setActivePageId((prev) => (prev && pages.some((p) => p.id === prev) ? prev : pages[0].id));
+  }, [pages]);
 
   if (loading) return <div className="p-8"><LoadingState label="Loading app config…" /></div>;
   if (error) {
@@ -78,16 +87,36 @@ function AppViewer() {
           </p>
         </Card>
       ) : (
-        pages.map((page) => (
-          <section key={page.id} className="space-y-6">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{page.title}</h2>
-            <div className={layoutClass(page.layout)}>
-              {(page.components ?? []).map((c) => (
-                <RenderComponent key={c.id} config={c} />
+        <div className="space-y-6">
+          <Card className="glass-panel p-3">
+            <div className="flex flex-wrap gap-2">
+              {pages.map((p) => (
+                <Button
+                  key={p.id}
+                  variant={p.id === activePageId ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActivePageId(p.id)}
+                  className={p.id === activePageId ? "bg-gradient-to-r from-primary to-[oklch(0.55_0.22_268)]" : ""}
+                >
+                  {p.title}
+                </Button>
               ))}
             </div>
-          </section>
-        ))
+          </Card>
+
+          {pages
+            .filter((p) => p.id === activePageId)
+            .map((page) => (
+              <section key={page.id} className="space-y-6">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{page.title}</h2>
+                <div className={layoutClass(page.layout)}>
+                  {(page.components ?? []).map((c) => (
+                    <RenderComponent key={c.id} config={c} />
+                  ))}
+                </div>
+              </section>
+            ))}
+        </div>
       )}
       </div>
     </div>
