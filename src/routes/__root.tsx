@@ -3,6 +3,7 @@ import appCss from "../styles.css?url";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 function NotFoundComponent() {
   return (
@@ -58,7 +59,9 @@ function RootComponent() {
             </div>
           </header>
           <main className="flex-1">
-            <Outlet />
+            <ErrorBoundary label="Route">
+              <Outlet />
+            </ErrorBoundary>
           </main>
         </div>
       </div>

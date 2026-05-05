@@ -57,6 +57,14 @@ function AppViewer() {
 
       {app.auth?.enabled ? <AuthPanel /> : null}
 
+      {pages.length === 0 ? (
+        <Card className="glass-panel p-6">
+          <p className="text-sm font-medium">No pages found</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            This app config loaded, but it didn’t contain any renderable pages.
+          </p>
+        </Card>
+      ) : (
       {pages.map((page) => (
         <section key={page.id} className="space-y-6">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{page.title}</h2>
@@ -67,6 +75,7 @@ function AppViewer() {
           </div>
         </section>
       ))}
+      )}
       </div>
     </div>
   );
