@@ -63,6 +63,14 @@ app.use(requestLogger);
 
 app.use('/api', rateLimiter);
 
+app.get('/', (_req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'config-canvas-backend',
+    health: '/health'
+  });
+});
+
 let healthCache: { checkedAt: number; dbHealthy: boolean } | null = null;
 const HEALTH_CACHE_MS = 30_000;
 

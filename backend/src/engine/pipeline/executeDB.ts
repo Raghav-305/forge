@@ -22,20 +22,10 @@ export async function executeDB(ctx: EngineContext): Promise<EngineContext> {
           orderBy: ctx.query.orderBy
         });
 
-        const total = await prisma.appData.count({
-          where: {
-            config_slug,
-            config_version,
-            entity_slug: entity,
-            ...ctx.query.where
-          }
-        });
-
         ctx.metadata.pagination = {
-          total,
           skip: ctx.query.skip,
           take: ctx.query.take,
-          hasMore: ctx.query.skip + ctx.query.take < total
+          hasMore: Array.isArray(ctx.result) && ctx.result.length === ctx.query.take
         };
         break;
 

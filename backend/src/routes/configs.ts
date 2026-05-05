@@ -53,6 +53,19 @@ router.get('/:slug', async (req, res) => {
           { slug: slugOrId },
           { id: slugOrId }
         ]
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        version: true,
+        config: true,
+        is_active: true,
+        created_by: true,
+        created_at: true,
+        updated_at: true,
+        previous_version_id: true
       }
     });
 
@@ -60,11 +73,12 @@ router.get('/:slug', async (req, res) => {
       return res.status(404).json({ error: 'Config not found' });
     }
 
-    const history = await VersionManager.getVersionHistory(config.slug);
+    const includeHistory = req.query.includeHistory === 'true';
+    const history = includeHistory ? await VersionManager.getVersionHistory(config.slug) : undefined;
 
     return res.json({
       ...config,
-      history
+      ...(history ? { history } : {})
     });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
