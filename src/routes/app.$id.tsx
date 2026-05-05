@@ -65,16 +65,16 @@ function AppViewer() {
           </p>
         </Card>
       ) : (
-      {pages.map((page) => (
-        <section key={page.id} className="space-y-6">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{page.title}</h2>
-          <div className={layoutClass(page.layout)}>
-            {(page.components ?? []).map((c) => (
-              <RenderComponent key={c.id} config={c} />
-            ))}
-          </div>
-        </section>
-      ))}
+        pages.map((page) => (
+          <section key={page.id} className="space-y-6">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{page.title}</h2>
+            <div className={layoutClass(page.layout)}>
+              {(page.components ?? []).map((c) => (
+                <RenderComponent key={c.id} config={c} />
+              ))}
+            </div>
+          </section>
+        ))
       )}
       </div>
     </div>
