@@ -18,7 +18,7 @@ export const Route = createFileRoute("/app/$id")({
 
 function AppViewer() {
   const { id } = Route.useParams();
-  const { data: app, loading } = useEngineApp(id);
+  const { data: app, loading, error } = useEngineApp(id);
   const pages = app?.pages ?? [];
 
   useEffect(() => {
@@ -29,6 +29,19 @@ function AppViewer() {
   }, [app?.slug, id]);
 
   if (loading) return <div className="p-8"><LoadingState label="Loading app config…" /></div>;
+  if (error) {
+    return (
+      <div className="p-10">
+        <Card className="glass-panel p-6">
+          <p className="text-sm font-medium">Failed to load app</p>
+          <p className="mt-1 text-xs text-muted-foreground">{error.message}</p>
+          <div className="mt-4">
+            <Link to="/"><Button variant="outline">Back to dashboard</Button></Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
   if (!app) {
     return (
       <div className="p-10 text-center">

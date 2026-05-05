@@ -17,6 +17,10 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Render (and most PaaS) run behind a proxy/load balancer and will set X-Forwarded-For.
+// express-rate-limit validates this header unless Express is configured to trust the proxy.
+app.set('trust proxy', 1);
 const frontendUrls = process.env.FRONTEND_URL?.trim();
 const allowedOrigins = frontendUrls
   ? frontendUrls.split(',').map(origin => origin.trim()).filter(Boolean)
