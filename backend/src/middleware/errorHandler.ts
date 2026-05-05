@@ -19,6 +19,6 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
     error: message,
     path: req.path,
     timestamp: new Date().toISOString(),
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(process.env.SHOW_ERROR_STACKS === 'true' && { stack: err.stack })
   });
 }

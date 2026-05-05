@@ -31,9 +31,15 @@ export async function emitEvents(ctx: EngineContext): Promise<EngineContext> {
     events.push(event);
 
     eventBus.emit(event.event_type, event);
-    eventBus.emit('*', { event: event.event_type, payload: event });
 
-    prisma.eventLog.create({ data: event }).catch(console.error);
+    const shouldPersistEvent =
+      event.severity === 'error' ||
+      ctx.input.action !== 'list' ||
+      process.env.PERSIST_ENGINE_LIST_EVENTS === 'true';
+
+    if (shouldPersistEvent) {
+      prisma.eventLog.create({ data: event }).catch(console.error);
+    }
 
     if (event.severity === 'error' && ctx.user?.id) {
       await prisma.notification.create({

@@ -63,7 +63,9 @@ export const eventBus = new EnhancedEventEmitter();
 
 eventBus.setMaxListeners(100);
 
-if (process.env.NODE_ENV === 'development') {
+const shouldLogEvents = process.env.LOG_EVENTS === 'true';
+
+if (shouldLogEvents) {
   eventBus.on('*', (data) => {
     console.log(`[EVENT] ${data.event}`, data.payload);
   });
