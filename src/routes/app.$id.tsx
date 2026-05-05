@@ -21,6 +21,7 @@ function AppViewer() {
   const { data: app, loading, error } = useEngineApp(id);
   const pages = app?.pages ?? [];
   const [activePageId, setActivePageId] = useState<string | null>(null);
+  const activePage = activePageId ? pages.find((p) => p.id === activePageId) : undefined;
 
   useEffect(() => {
     const activeSlug = app?.slug ?? id;
@@ -104,18 +105,16 @@ function AppViewer() {
             </div>
           </Card>
 
-          {pages
-            .filter((p) => p.id === activePageId)
-            .map((page) => (
-              <section key={page.id} className="space-y-6">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{page.title}</h2>
-                <div className={layoutClass(page.layout)}>
-                  {(page.components ?? []).map((c) => (
-                    <RenderComponent key={c.id} config={c} />
-                  ))}
-                </div>
-              </section>
-            ))}
+          {activePage ? (
+            <section className="space-y-6">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{activePage.title}</h2>
+              <div className={layoutClass(activePage.layout)}>
+                {(activePage.components ?? []).map((c) => (
+                  <RenderComponent key={c.id} config={c} />
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       )}
       </div>
