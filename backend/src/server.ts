@@ -26,7 +26,7 @@ const allowedOrigins = frontendUrls
   ? frontendUrls.split(',').map(origin => origin.trim()).filter(Boolean)
   : [];
 const allowAllOrigins = allowedOrigins.includes('*') || allowedOrigins.length === 0;
-const vercelPreviewOriginPattern = /^https:\/\/forge-[a-z0-9-]+-raghavbhardwaj305-8776s-projects\.vercel\.app$/i;
+const vercelPreviewOriginPattern = /^https:\/\/forge-[a-z0-9-]+(?:-raghavbhardwaj305-8776s-projects)?\.vercel\.app$/i;
 
 if (!frontendUrls) {
   console.warn('WARNING: FRONTEND_URL is not configured; CORS will allow all origins.');
