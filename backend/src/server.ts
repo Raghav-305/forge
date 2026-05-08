@@ -26,7 +26,10 @@ const allowedOrigins = frontendUrls
   ? frontendUrls.split(',').map(origin => origin.trim()).filter(Boolean)
   : [];
 const allowAllOrigins = allowedOrigins.includes('*') || allowedOrigins.length === 0;
-const vercelPreviewOriginPattern = /^https:\/\/forge-[a-z0-9-]+(?:-raghavbhardwaj305-8776s-projects)?\.vercel\.app$/i;
+const vercelOriginPatterns = [
+  /^https:\/\/forge-[a-z0-9-]+\.vercel\.app$/i,
+  /^https:\/\/forge-[a-z0-9-]+-raghavbhardwaj305-8776s-projects\.vercel\.app$/i
+];
 
 if (!frontendUrls) {
   console.warn('WARNING: FRONTEND_URL is not configured; CORS will allow all origins.');
@@ -40,14 +43,14 @@ app.use(compression());
 
 app.use(cors({
   origin: (origin, callback) => {
-    const isVercelPreview = typeof origin === 'string' && vercelPreviewOriginPattern.test(origin);
+    const isVercelPreview = typeof origin === 'string' && vercelOriginPatterns.some(pattern => pattern.test(origin));
     if (!origin || allowAllOrigins || allowedOrigins.includes(origin) || isVercelPreview) {
       return callback(null, true);
     }
 
     const allowedMsg = [
       ...allowedOrigins,
-      'Vercel previews: https://forge-<preview>-raghavbhardwaj305-8776s-projects.vercel.app'
+      'Vercel previews: https://forge-<name>.vercel.app'
     ].join(', ');
     console.warn(`Blocked CORS origin: ${origin}. Allowed: ${allowedMsg}`);
     return callback(new Error(`Origin ${origin} is not allowed by CORS`));
@@ -119,7 +122,7 @@ app.use((req, res) => {
 
 async function startServer() {
   try {
-    const dbConnected = await checkDatabaseConnection(3, { logSuccess: true });
+    const dbConnected = await checkDatabaseConnection(5, { logSuccess: true });
 
     if (!dbConnected) {
       console.error('Failed to connect to database. Exiting...');
