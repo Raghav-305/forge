@@ -1,28 +1,33 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const shouldLogQueries = process.env.PRISMA_QUERY_LOGS === 'true';
+const logLevels: Prisma.LogLevel[] = shouldLogQueries
+  ? ['query', 'info', 'warn', 'error']
+  : ['warn', 'error'];
 
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: shouldLogQueries ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
+    log: logLevels,
     errorFormat: 'pretty'
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-prisma.$on('error', (event) => {
-  console.error('[Prisma] error event:', event.message || event);
+const prismaAny = prisma as any;
+
+prismaAny.$on('error', (event: any) => {
+  console.error('[Prisma] error event:', event?.message || event);
 });
 
-prisma.$on('warn', (event) => {
-  console.warn('[Prisma] warning event:', event.message || event);
+prismaAny.$on('warn', (event: any) => {
+  console.warn('[Prisma] warning event:', event?.message || event);
 });
 
 if (process.env.PRISMA_INFO_LOGS === 'true') {
-  prisma.$on('info', (event) => {
-    console.info('[Prisma] info event:', event.message || event);
+  prismaAny.$on('info', (event: any) => {
+    console.info('[Prisma] info event:', event?.message || event);
   });
 }
 

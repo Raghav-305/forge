@@ -44,9 +44,9 @@ npm run docker:up
 ## Deployment checklist
 
 - Verify `DATABASE_URL` in your Render/production environment matches your Neon/PostgreSQL connection string.
-- Verify `FRONTEND_URL` includes the live frontend origin, for example:
-  - `https://forge-sigma-three.vercel.app`
-- Verify the frontend is configured to call the backend URL:
-  - `VITE_API_BASE_URL=https://backend-gxn1.onrender.com`
+- Verify `FRONTEND_URL` includes the live frontend origin and local dev origins.
+  - Example: `http://localhost:3000,http://localhost:8080,https://forge-sigma-three.vercel.app`
+- For Vercel, set `VITE_API_BASE_URL` to the backend URL:
+  - `https://backend-gxn1.onrender.com`
 - Use `/health` to confirm the backend can reach the database:
   - `https://backend-gxn1.onrender.com/health`
