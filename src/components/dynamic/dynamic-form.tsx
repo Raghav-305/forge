@@ -53,50 +53,59 @@ const FieldRow = memo(function FieldRow({
 });
 
 export function DynamicForm({ config, configSlug }: { config: ComponentConfig; configSlug?: string }) {
-  const fields = config.fields ?? [];
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  try {
+    console.log('[DynamicForm] START - id:', config.id, 'dataSource:', config.dataSource);
+    const fields = config.fields ?? [];
+    console.log('[DynamicForm] Fields loaded:', fields.length);
+    const [values, setValues] = useState<Record<string, string>>({});
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
 
-  if (fields.length === 0) {
-    return (
-      <Card className="glass-panel p-5">
-        <EmptyState label="No fields defined for this form" />
-      </Card>
-    );
-  }
+    if (fields.length === 0) {
+      return (
+        <Card className="glass-panel p-5">
+          <EmptyState label="No fields defined for this form" />
+        </Card>
+      );
+    }
 
   const set = useCallback((k: string, v: string) => {
     setValues((p) => (p[k] === v ? p : { ...p, [k]: v }));
   }, []);
 
-  const submit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (saving) return;
+    const submit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      console.log('[DynamicForm] Submit triggered, saving:', saving);
+      if (saving) return;
 
-    const source = config.dataSource;
-    if (!source) {
-      setFormError("No data source configured for this form");
-      toast.error("No data source configured for this form");
-      return;
-    }
+      const source = config.dataSource;
+      if (!source) {
+        console.error('[DynamicForm] No data source configured');
+        setFormError("No data source configured for this form");
+        toast.error("No data source configured for this form");
+        return;
+      }
 
-    setSaving(true);
-    setFormError(null);
-    try {
-      await createEngineRecord(source, values, configSlug);
-      setValues({});
-      toast.success("Record created");
-    } catch (error: any) {
-      const message = error?.message || "The engine could not create this record";
-      setFormError(message);
-      toast.error("Create failed", {
-        description: message
-      });
-    } finally {
-      setSaving(false);
-    }
-  }, [config.dataSource, configSlug, saving, values]);
+      console.log('[DynamicForm] Starting form submission to:', source);
+      setSaving(true);
+      setFormError(null);
+      try {
+        console.log('[DynamicForm] Creating record with values:', Object.keys(values));
+        await createEngineRecord(source, values, configSlug);
+        console.log('[DynamicForm] Record created successfully');
+        setValues({});
+        toast.success("Record created");
+      } catch (error: any) {
+        const message = error?.message || "The engine could not create this record";
+        console.error('[DynamicForm] Record creation failed:', message);
+        setFormError(message);
+        toast.error("Create failed", {
+          description: message
+        });
+      } finally {
+        setSaving(false);
+      }
+    }, [config.dataSource, configSlug, saving, values]);
 
   return (
     <Card className="glass-panel p-5">
@@ -110,14 +119,17 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
         className="grid gap-4 sm:grid-cols-2"
         onSubmit={submit}
       >
-        {fields.map((f) => (
-          <FieldRow
-            key={f.key}
-            field={f}
-            value={values[f.key] ?? ""}
-            setFieldValue={set}
-          />
-        ))}
+        {fields.map((f, idx) => {
+          console.log('[DynamicForm] Rendering field:', idx, 'key:', f.key, 'label:', f.label);
+          return (
+            <FieldRow
+              key={f.key}
+              field={f}
+              value={values[f.key] ?? ""}
+              setFieldValue={set}
+            />
+          );
+        })}
         <div className="sm:col-span-2 flex justify-end">
           <Button disabled={saving} type="submit" className="bg-gradient-to-r from-primary to-[oklch(0.55_0.22_268)]">
             {saving ? "Saving..." : "Submit"}
@@ -129,4 +141,8 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
       </form>
     </Card>
   );
+  } catch (err) {
+    console.error('[DynamicForm] RENDER ERROR:', err);
+    return <div className="text-red-500 text-sm">Form rendering failed: {String(err)}</div>;
+  }
 }

@@ -20,15 +20,22 @@ export function DynamicTable({
   config: ComponentConfig;
   configSlug?: string;
 }) {
-  const { data, loading, error } = useEngineData(config.dataSource, configSlug);
-  const cols = config.columns ?? [];
-  const visibleRows = (data ?? []).slice(0, MAX_RENDERED_ROWS);
-  const hiddenRows = Math.max((data?.length ?? 0) - visibleRows.length, 0);
+  try {
+    console.log('[DynamicTable] START - id:', config.id, 'dataSource:', config.dataSource);
+    const { data, loading, error } = useEngineData(config.dataSource, configSlug);
+    console.log('[DynamicTable] useEngineData completed - data count:', data?.length, 'loading:', loading, 'error:', error?.message);
+    
+    const cols = config.columns ?? [];
+    console.log('[DynamicTable] Columns configured:', cols.length);
+    
+    const visibleRows = (data ?? []).slice(0, MAX_RENDERED_ROWS);
+    const hiddenRows = Math.max((data?.length ?? 0) - visibleRows.length, 0);
+    console.log('[DynamicTable] Visible rows:', visibleRows.length, 'Hidden rows:', hiddenRows);
 
-  return (
-    <Card className="glass-panel overflow-hidden p-0">
-      <div className="border-b border-border/60 px-5 py-4">
-        <h3 className="text-sm font-semibold tracking-tight">{config.title ?? "Table"}</h3>
+    return (
+      <Card className="glass-panel overflow-hidden p-0">
+        <div className="border-b border-border/60 px-5 py-4">
+          <h3 className="text-sm font-semibold tracking-tight">{config.title ?? "Table"}</h3>
         {config.description ? (
           <p className="text-xs text-muted-foreground">{config.description}</p>
         ) : null}
@@ -45,14 +52,16 @@ export function DynamicTable({
             <Table>
               <TableHeader>
                 <TableRow>
-                  {cols.map((c) => (
-                    <TableHead
-                      key={c.key}
+                  {cols.map((c, colIdx) => {
+                    console.log('[DynamicTable] Rendering column:', colIdx, 'key:', c.key);
+                    return (
+                      <TableHead
+                        key={c.key}
                       className="text-xs uppercase tracking-wider text-muted-foreground"
                     >
                       {c.label}
-                    </TableHead>
-                  ))}
+                      </TableHead>
+                    );})
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -77,4 +86,7 @@ export function DynamicTable({
       </div>
     </Card>
   );
-}
+  } catch (err) {
+    console.error('[DynamicTable] ERROR:', err);
+    throw err;
+  }

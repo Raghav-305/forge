@@ -33,10 +33,24 @@ function Fallback({ type }: { type: string }) {
 }
 
 export function RenderComponent({ config, configSlug }: RenderProps) {
-  const Comp = registry[config.type];
-  return (
-    <ErrorBoundary label={config.title ?? config.type}>
-      {Comp ? <Comp config={config} configSlug={configSlug} /> : <Fallback type={config.type} />}
-    </ErrorBoundary>
-  );
+  try {
+    console.log('[RenderComponent] Rendering component:', config?.type, 'id:', config?.id, 'title:', config?.title);
+    
+    if (!config) {
+      console.error('[RenderComponent] No config provided');
+      return <Fallback type="unknown" />;
+    }
+    
+    const Comp = registry[config.type];
+    console.log('[RenderComponent] Found renderer:', !!Comp, 'for type:', config.type);
+    
+    return (
+      <ErrorBoundary label={config.title ?? config.type}>
+        {Comp ? <Comp config={config} configSlug={configSlug} /> : <Fallback type={config.type} />}
+      </ErrorBoundary>
+    );
+  } catch (err) {
+    console.error('[RenderComponent] Error:', err);
+    return <Fallback type={config?.type ?? 'unknown'} />;
+  }
 }

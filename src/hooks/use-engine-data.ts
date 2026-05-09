@@ -56,18 +56,22 @@ function normalizeField(field: any, fallbackKey: string) {
 }
 
 function normalizeComponent(component: any, fallbackId: string) {
-  const props = component?.props && typeof component.props === "object" ? component.props : {};
-  const merged = {
-    ...component,
-    ...props
-  };
+  try {
+    console.log('[normalizeComponent] Input:', component?.type, 'id:', component?.id);
+    
+    const props = component?.props && typeof component.props === "object" ? component.props : {};
+    const merged = {
+      ...component,
+      ...props
+    };
 
-  const id = String(merged?.id ?? merged?.key ?? merged?.title ?? fallbackId);
+    const id = String(merged?.id ?? merged?.key ?? merged?.title ?? fallbackId);
+    console.log('[normalizeComponent] Merged component type:', merged?.type, 'id:', id);
 
-  return {
-    ...merged,
-    id,
-    type: merged?.type ?? "table",
+    const result = {
+      ...merged,
+      id,
+      type: merged?.type ?? "table",
     fields: Array.isArray(merged?.fields)
       ? merged.fields.map((field: any, i: number) => normalizeField(field, `${id}:field:${i}`))
       : undefined,
@@ -77,26 +81,47 @@ function normalizeComponent(component: any, fallbackId: string) {
 }
 
 function normalizePage(page: any, fallbackId: string) {
-  const components = Array.isArray(page?.components) ? page.components : [];
-  const inferredDataSource = components.find((component: any) => component?.dataSource || component?.entity)?.dataSource
-    ?? components.find((component: any) => component?.dataSource || component?.entity)?.entity;
+  try {
+    console.log('[normalizePage] Input page:', page, 'fallbackId:', fallbackId);
+    
+    const components = Array.isArray(page?.components) ? page.components : [];
+    console.log('[normalizePage] Found', components.length, 'components');
+    
+    const inferredDataSource = components.find((component: any) => component?.dataSource || component?.entity)?.dataSource
+      ?? components.find((component: any) => component?.dataSource || component?.entity)?.entity;
 
-  const pageId = String(page?.id ?? page?.slug ?? page?.title ?? fallbackId);
+    const pageId = String(page?.id ?? page?.slug ?? page?.title ?? fallbackId);
+    console.log('[normalizePage] Page ID:', pageId);
 
-  return {
-    ...page,
-    id: pageId,
-    title: page?.title ?? page?.name ?? "Untitled Page",
-    components: components.map((component: any, i: number) =>
-      normalizeComponent(
-        {
-          ...component,
-          dataSource: component?.dataSource ?? component?.entity ?? (component?.type === "form" ? inferredDataSource : undefined)
-        },
-        `${pageId}:component:${i}`
-      )
-    )
-  };
+    const normalizedComponents = components.map((component: any, i: number) => {
+      try {
+        console.log(`[normalizePage] Normalizing component ${i}:`, component.type);
+        return normalizeComponent(
+          {
+            ...component,
+            dataSource: component?.dataSource ?? component?.entity ?? (component?.type === "form" ? inferredDataSource : undefined)
+          },
+          `${pageId}:component:${i}`
+        );
+      } catch (err) {
+        console.error(`[normalizePage] Error normalizing component ${i}:`, err);
+        throw err;
+      }
+    });
+
+    const result = {
+      ...page,
+      id: pageId,
+      title: page?.title ?? page?.name ?? "Untitled Page",
+      components: normalizedComponents
+    };
+    
+    console.log('[normalizePage] Output page:', result);
+    return result;
+  } catch (err) {
+    console.error('[normalizePage] Error:', err);
+    throw err;
+  }
 }
 
 function normalizeAppConfig(raw: any): AppConfig {
@@ -122,7 +147,7 @@ function normalizeAppConfig(raw: any): AppConfig {
         ? Object.values(config.ui.pages)
         : [];
 
-    const pages = Array.isArray(raw?.pages)
+    let pages = Array.isArray(raw?.pages)
       ? raw.pages
       : Array.isArray(config?.pages)
         ? config.pages

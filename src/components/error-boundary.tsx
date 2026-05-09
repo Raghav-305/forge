@@ -14,9 +14,12 @@ export class ErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
-  componentDidCatch(error: Error) {
+  componentDidCatch(error: Error, errorInfo: any) {
     // eslint-disable-next-line no-console
-    console.error("[ErrorBoundary]", error);
+    console.error("[ErrorBoundary] CAUGHT ERROR:", error);
+    console.error("[ErrorBoundary] Label:", this.props.label);
+    console.error("[ErrorBoundary] Stack:", error.stack);
+    console.error("[ErrorBoundary] Component Stack:", errorInfo.componentStack);
   }
   render() {
     if (this.state.error) {

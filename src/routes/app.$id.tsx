@@ -66,6 +66,8 @@ function AppViewer() {
     );
   }
 
+  console.log('[AppViewer] Rendering app view with', pages.length, 'pages');
+  
   return (
     <div className="min-h-screen" style={getAppStyle(app)}>
       <div className="mx-auto max-w-7xl space-y-8 p-6 lg:p-10">
@@ -93,6 +95,7 @@ function AppViewer() {
         </Card>
       ) : (
         <div className="space-y-6">
+          {console.log('[AppViewer] Rendering', pages.length, 'page tabs')}
           <Card className="glass-panel p-3">
             <div className="flex flex-wrap gap-2">
               {pages.map((p) => (
@@ -110,12 +113,16 @@ function AppViewer() {
           </Card>
 
           {activePage ? (
-            <section className="space-y-6">
+            <section className="space-y-6\">
+              {console.log('[AppViewer] Rendering active page:', activePage?.id, 'with', activePage?.components?.length ?? 0, 'components')}
               <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{activePage.title}</h2>
               <div className={layoutClass(activePage.layout)}>
-                {(activePage.components ?? []).map((c) => (
-                  <RenderComponent key={c.id} config={c} configSlug={configSlug} />
-                ))}
+                {(activePage.components ?? []).map((c) => {
+                  console.log('[AppViewer] About to render component:', c?.type, 'id:', c?.id);
+                  return (
+                    <RenderComponent key={c.id} config={c} configSlug={configSlug} />
+                  );
+                })}
               </div>
             </section>
           ) : null}
