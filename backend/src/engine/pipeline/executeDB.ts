@@ -45,7 +45,7 @@ export async function executeDB(ctx: EngineContext): Promise<EngineContext> {
         }
         break;
 
-      case 'create':
+      case 'create': {
         const entityConfig = ctx.config.entities?.find((e: any) => e.slug === entity);
         if (entityConfig?.fields) {
           const missingFields = entityConfig.fields
@@ -70,8 +70,9 @@ export async function executeDB(ctx: EngineContext): Promise<EngineContext> {
           }
         });
         break;
+      }
 
-      case 'update':
+      case 'update': {
         const updateResult = await prisma.appData.updateMany({
           where: {
             config_slug,
@@ -92,8 +93,9 @@ export async function executeDB(ctx: EngineContext): Promise<EngineContext> {
 
         ctx.result = { success: true, updated: updateResult.count };
         break;
+      }
 
-      case 'delete':
+      case 'delete': {
         const deleteResult = await prisma.appData.deleteMany({
           where: {
             config_slug,
@@ -110,6 +112,7 @@ export async function executeDB(ctx: EngineContext): Promise<EngineContext> {
 
         ctx.result = { success: true, deleted: deleteResult.count };
         break;
+      }
 
       default:
         throw new Error(`Unknown action: ${action}`);
