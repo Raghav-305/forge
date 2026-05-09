@@ -35,7 +35,8 @@ function AppViewer() {
       setActivePageId(null);
       return;
     }
-    console.log('[AppViewer] Pages updated:', pages.length, 'pages');\n    setActivePageId((prev) => (prev && pages.some((p) => p.id === prev) ? prev : pages[0].id));
+    console.log('[AppViewer] Pages updated:', pages.length, 'pages');
+    setActivePageId((prev) => (prev && pages.some((p) => p.id === prev) ? prev : pages[0].id));
   }, [pageIds, pages]);
 
   if (loading) return <div className="p-8"><LoadingState label="Loading app config…" /></div>;
