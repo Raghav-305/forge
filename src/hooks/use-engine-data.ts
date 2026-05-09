@@ -72,12 +72,19 @@ function normalizeComponent(component: any, fallbackId: string) {
       ...merged,
       id,
       type: merged?.type ?? "table",
-    fields: Array.isArray(merged?.fields)
-      ? merged.fields.map((field: any, i: number) => normalizeField(field, `${id}:field:${i}`))
-      : undefined,
-    columns: Array.isArray(merged?.columns) ? merged.columns : undefined,
-    cards: Array.isArray(merged?.cards) ? merged.cards : undefined
-  };
+      fields: Array.isArray(merged?.fields)
+        ? merged.fields.map((field: any, i: number) => normalizeField(field, `${id}:field:${i}`))
+        : undefined,
+      columns: Array.isArray(merged?.columns) ? merged.columns : undefined,
+      cards: Array.isArray(merged?.cards) ? merged.cards : undefined
+    };
+    
+    console.log('[normalizeComponent] Normalized component:', result.id, 'type:', result.type);
+    return result;
+  } catch (err) {
+    console.error('[normalizeComponent] Error:', err);
+    throw err;
+  }
 }
 
 function normalizePage(page: any, fallbackId: string) {
