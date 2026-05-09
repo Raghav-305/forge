@@ -32,6 +32,8 @@ export function DynamicTable({
     const hiddenRows = Math.max((data?.length ?? 0) - visibleRows.length, 0);
     console.log('[DynamicTable] Visible rows:', visibleRows.length, 'Hidden rows:', hiddenRows);
 
+    console.log('[DynamicTable] About to render JSX, loading:', loading, 'error:', error, 'hasData:', !!data, 'dataLength:', data?.length);
+    
     return (
       <Card className="glass-panel overflow-hidden p-0">
         <div className="border-b border-border/60 px-5 py-4">

@@ -113,15 +113,20 @@ function AppViewer() {
           </Card>
 
           {activePage ? (
-            <section className="space-y-6\">
+            <section className="space-y-6">
               {console.log('[AppViewer] Rendering active page:', activePage?.id, 'with', activePage?.components?.length ?? 0, 'components')}
               <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{activePage.title}</h2>
               <div className={layoutClass(activePage.layout)}>
                 {(activePage.components ?? []).map((c) => {
-                  console.log('[AppViewer] About to render component:', c?.type, 'id:', c?.id);
-                  return (
-                    <RenderComponent key={c.id} config={c} configSlug={configSlug} />
-                  );
+                  try {
+                    console.log('[AppViewer] About to render component:', c?.type, 'id:', c?.id, 'config:', c);
+                    return (
+                      <RenderComponent key={c.id} config={c} configSlug={configSlug} />
+                    );
+                  } catch (err) {
+                    console.error('[AppViewer] Error rendering component:', c?.id, err);
+                    return <div key={c.id} className="text-red-500 text-sm">Error rendering {c?.type}</div>;
+                  }
                 })}
               </div>
             </section>
