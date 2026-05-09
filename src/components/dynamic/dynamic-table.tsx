@@ -88,3 +88,4 @@ export function DynamicTable({
     console.error('[DynamicTable] ERROR:', err);
     throw err;
   }
+}
