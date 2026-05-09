@@ -26,20 +26,27 @@ function AppViewer() {
   const activePage = activePageId ? pages.find((p) => p.id === activePageId) : undefined;
 
   useEffect(() => {
+    console.log('[AppViewer] Component mounted with id:', id, 'loading:', loading, 'error:', error, 'app:', app);
+  }, [id, loading, error, app]);
+
+  useEffect(() => {
     if (!pages.length) {
+      console.log('[AppViewer] No pages found, clearing activePageId');
       setActivePageId(null);
       return;
     }
-    setActivePageId((prev) => (prev && pages.some((p) => p.id === prev) ? prev : pages[0].id));
+    console.log('[AppViewer] Pages updated:', pages.length, 'pages');\n    setActivePageId((prev) => (prev && pages.some((p) => p.id === prev) ? prev : pages[0].id));
   }, [pageIds, pages]);
 
   if (loading) return <div className="p-8"><LoadingState label="Loading app config…" /></div>;
   if (error) {
+    console.error('[AppViewer] Error state:', error);
     return (
       <div className="p-10">
         <Card className="glass-panel p-6">
           <p className="text-sm font-medium">Failed to load app</p>
           <p className="mt-1 text-xs text-muted-foreground">{error.message}</p>
+          <p className="mt-2 text-xs font-mono text-muted-foreground opacity-50">{error.stack}</p>
           <div className="mt-4">
             <Link to="/"><Button variant="outline">Back to dashboard</Button></Link>
           </div>
@@ -48,6 +55,7 @@ function AppViewer() {
     );
   }
   if (!app) {
+    console.warn('[AppViewer] App is null after loading');
     return (
       <div className="p-10 text-center">
         <h1 className="text-xl font-semibold">App not found</h1>

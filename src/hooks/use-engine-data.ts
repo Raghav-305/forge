@@ -100,36 +100,64 @@ function normalizePage(page: any, fallbackId: string) {
 }
 
 function normalizeAppConfig(raw: any): AppConfig {
-  // Backend stores config JSON under AppConfig.config (Prisma Json).
-  // Some endpoints or older versions may wrap the actual JSON as config.config.
-  const configContainer = raw?.config && typeof raw.config === "object" ? raw.config : {};
-  const config =
-    (configContainer as any)?.config && typeof (configContainer as any).config === "object"
-      ? (configContainer as any).config
-      : configContainer;
+  try {
+    console.log('[normalizeAppConfig] Input:', raw);
+    
+    // Validate raw is an object
+    if (!raw || typeof raw !== 'object') {
+      console.error('[normalizeAppConfig] Invalid raw input, not an object:', typeof raw);
+      throw new Error('Expected config object from backend');
+    }
 
-  const pagesFromUiObject =
-    config?.ui?.pages && typeof config.ui.pages === "object"
-      ? Object.values(config.ui.pages)
-      : [];
+    // Backend stores config JSON under AppConfig.config (Prisma Json).
+    // Some endpoints or older versions may wrap the actual JSON as config.config.
+    const configContainer = raw?.config && typeof raw.config === "object" ? raw.config : {};
+    const config =
+      (configContainer as any)?.config && typeof (configContainer as any).config === "object"
+        ? (configContainer as any).config
+        : configContainer;
 
-  const pages = Array.isArray(raw?.pages)
-    ? raw.pages
-    : Array.isArray(config?.pages)
-      ? config.pages
-      : Array.isArray(pagesFromUiObject)
-        ? pagesFromUiObject
+    const pagesFromUiObject =
+      config?.ui?.pages && typeof config.ui.pages === "object"
+        ? Object.values(config.ui.pages)
         : [];
 
-  return {
-    ...config,
-    ...raw,
-    slug: raw?.slug ?? config.slug,
-    name: raw?.name ?? config.name ?? "Untitled App",
-    description: raw?.description ?? config.description,
-    version: raw?.version ?? config.version,
-    pages: pages.map((page: any, i: number) => normalizePage(page, `${raw?.slug ?? raw?.id ?? config?.slug ?? "app"}:page:${i}`))
-  };
+    const pages = Array.isArray(raw?.pages)
+      ? raw.pages
+      : Array.isArray(config?.pages)
+        ? config.pages
+        : Array.isArray(pagesFromUiObject)
+          ? pagesFromUiObject
+          : [];
+
+    if (!Array.isArray(pages)) {
+      console.warn('[normalizeAppConfig] Pages is not an array:', pages);
+      pages = [];
+    }
+
+    const normalized = {
+      ...config,
+      ...raw,
+      slug: raw?.slug ?? config?.slug,
+      name: raw?.name ?? config?.name ?? "Untitled App",
+      description: raw?.description ?? config?.description,
+      version: raw?.version ?? config?.version,
+      pages: pages.map((page: any, i: number) => {
+        try {
+          return normalizePage(page, `${raw?.slug ?? raw?.id ?? config?.slug ?? "app"}:page:${i}`);
+        } catch (pageError) {
+          console.error('[normalizeAppConfig] Error normalizing page', i, ':', pageError);
+          throw pageError;
+        }
+      })
+    };
+    
+    console.log('[normalizeAppConfig] Output:', normalized);
+    return normalized;
+  } catch (error) {
+    console.error('[normalizeAppConfig] Error normalizing config:', error);
+    throw error;
+  }
 }
 
 export function useEngineApps() {
@@ -165,8 +193,17 @@ export function useEngineApps() {
 export function useEngineApp(id: string) {
   return useAsyncFetch<AppConfig | null>(
     async () => {
-      const config = await apiGet<any>(`/api/configs/${id}`);
-      return normalizeAppConfig(config);
+      try {
+        console.log('[useEngineApp] Fetching config for id:', id);
+        const config = await apiGet<any>(`/api/configs/${id}`);
+        console.log('[useEngineApp] Raw config received:', config);
+        const normalized = normalizeAppConfig(config);
+        console.log('[useEngineApp] Normalized config:', normalized);
+        return normalized;
+      } catch (error) {
+        console.error('[useEngineApp] Error loading config:', error);
+        throw error;
+      }
     },
     [id],
     mockApps.find((a) => a.id === id || a.slug === id) ?? null
