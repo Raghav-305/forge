@@ -1,4 +1,4 @@
-import { EngineContext } from '../types';
+import { EngineContext } from '../types.js';
 
 export async function maskSensitive(ctx: EngineContext): Promise<EngineContext> {
   const sensitiveFields = ctx.config.sensitiveFields || ['password', 'token', 'secret', 'apiKey'];

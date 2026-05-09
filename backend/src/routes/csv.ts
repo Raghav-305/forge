@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { prisma } from '../db/prisma';
-import { CSVService } from '../services/csvService';
-import { eventBus } from '../events/eventBus';
+import { prisma } from '../db/prisma.js';
+import { CSVService } from '../services/csvService.js';
+import { eventBus } from '../events/eventBus.js';
 
 const router = Router();
 const upload = multer({

@@ -1,4 +1,4 @@
-import { EngineContext } from '../types';
+import { EngineContext } from '../types.js';
 
 export async function authorize(ctx: EngineContext): Promise<EngineContext> {
   const action = ctx.input.action;

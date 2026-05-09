@@ -1,6 +1,6 @@
-import { prisma } from '../db/prisma';
-import { eventBus } from '../events/eventBus';
-import { Prisma } from '@prisma/client';
+import { prisma } from '../db/prisma.js';
+import { eventBus } from '../events/eventBus.js';
+import { Prisma } from '../generated/prisma/index.js';
 
 export class VersionManager {
   static async createVersion(configSlug: string, config: any, createdBy?: string): Promise<any> {
@@ -17,7 +17,7 @@ export class VersionManager {
       };
 
       try {
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: typeof prisma) => {
           const history = await tx.configVersion.create({
             data: {
               config_slug: configSlug,
@@ -55,7 +55,7 @@ export class VersionManager {
         versionRecord = result.history;
         activeConfig = result.active;
         break;
-      } catch (error) {
+      } catch (error: any) {
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === 'P2002' &&

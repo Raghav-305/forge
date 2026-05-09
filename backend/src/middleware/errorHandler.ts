@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { eventBus } from '../events/eventBus';
+import { eventBus } from '../events/eventBus.js';
 
 export function errorHandler(err: any, req: Request, res: Response, next: NextFunction) {
   const status = err.status || 500;

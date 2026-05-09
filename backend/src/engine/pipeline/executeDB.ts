@@ -1,5 +1,5 @@
-import { EngineContext } from '../types';
-import { prisma } from '../../db/prisma';
+import { EngineContext } from '../types.js';
+import { prisma } from '../../db/prisma.js';
 
 export async function executeDB(ctx: EngineContext): Promise<EngineContext> {
   const { entity, action, data, id } = ctx.input;

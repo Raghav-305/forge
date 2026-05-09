@@ -11,6 +11,7 @@ interface State<T> {
 }
 
 const CACHE_TTL_MS = 30_000;
+const USE_MOCK_FALLBACK = import.meta.env.VITE_USE_MOCKS === "true";
 let appsCache: { data: AppConfig[]; expiresAt: number } | null = null;
 let appsPromise: Promise<AppConfig[]> | null = null;
 let healthCache: { data: Diagnostic[]; expiresAt: number } | null = null;
@@ -28,7 +29,7 @@ function useAsyncFetch<T>(producer: () => Promise<T>, deps: unknown[] = [], fall
         if (!cancelled) setState({ data, loading: false, error: null });
       })
       .catch((error) => {
-        if (!cancelled) setState({ data: fallback, loading: false, error: error as Error });
+        if (!cancelled) setState({ data: USE_MOCK_FALLBACK ? fallback : null, loading: false, error: error as Error });
       });
 
     return () => {

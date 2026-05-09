@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { Engine } from '../engine/Engine';
-import { prisma } from '../db/prisma';
-import { eventBus } from '../events/eventBus';
-import { EngineError } from '../engine/EngineError';
-import { VersionManager } from '../config/versionManager';
+import { Engine } from '../engine/Engine.js';
+import { prisma } from '../db/prisma.js';
+import { eventBus } from '../events/eventBus.js';
+import { EngineError } from '../engine/EngineError.js';
+import { VersionManager } from '../config/versionManager.js';
 
 const router = Router();
 

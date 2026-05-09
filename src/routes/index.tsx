@@ -23,8 +23,8 @@ const colorFor = {
 } as const;
 
 function Dashboard() {
-  const { data: apps, loading } = useEngineApps();
-  const { data: health, loading: hLoading } = useEngineHealth();
+  const { data: apps, loading, error: appsError } = useEngineApps();
+  const { data: health, loading: hLoading, error: healthError } = useEngineHealth();
 
   return (
     <div className="grid-bg">
@@ -49,7 +49,17 @@ function Dashboard() {
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Active Apps</h2>
             <Badge variant="outline" className="font-mono text-xs">{apps?.length ?? 0} running</Badge>
           </div>
-          {loading ? <LoadingState /> : !apps || apps.length === 0 ? <EmptyState /> : (
+          {loading ? <LoadingState /> : appsError ? (
+            <Card className="glass-panel border-destructive/30 p-5">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 text-destructive" />
+                <div>
+                  <p className="text-sm font-medium">Backend unavailable</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{appsError.message}</p>
+                </div>
+              </div>
+            </Card>
+          ) : !apps || apps.length === 0 ? <EmptyState /> : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {apps.map((a) => (
                 <Link key={a.id} to="/app/$id" params={{ id: a.slug ?? a.id }}>
@@ -81,6 +91,14 @@ function Dashboard() {
           <Card className="glass-panel divide-y divide-border/40">
             {hLoading ? (
               <div className="p-4"><LoadingState label="Running diagnostics…" /></div>
+            ) : healthError ? (
+              <div className="flex items-start gap-3 p-4">
+                <AlertTriangle className="mt-0.5 h-4 w-4 text-destructive" />
+                <div>
+                  <p className="text-sm font-medium">Health check failed</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{healthError.message}</p>
+                </div>
+              </div>
             ) : (
               (health ?? []).map((d, i) => {
                 const Icon = iconFor[d.level];

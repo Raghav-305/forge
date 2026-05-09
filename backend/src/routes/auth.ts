@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../db/prisma';
-import { eventBus } from '../events/eventBus';
+import { prisma } from '../db/prisma.js';
+import { eventBus } from '../events/eventBus.js';
 import { rateLimit } from 'express-rate-limit';
 
 const router = Router();

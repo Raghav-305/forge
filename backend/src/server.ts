@@ -3,16 +3,16 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import dotenv from 'dotenv';
-import { prisma, checkDatabaseConnection } from './db/prisma';
-import engineRoutes from './routes/engine';
-import configRoutes from './routes/configs';
-import authRoutes from './routes/auth';
-import csvRoutes from './routes/csv';
-import eventRoutes from './routes/events';
-import { authMiddleware, optionalAuthMiddleware } from './middleware/auth';
-import { errorHandler } from './middleware/errorHandler';
-import { rateLimiter } from './middleware/rateLimiter';
-import { requestLogger } from './middleware/requestLogger';
+import { prisma, checkDatabaseConnection } from './db/prisma.js';
+import engineRoutes from './routes/engine.js';
+import configRoutes from './routes/configs.js';
+import authRoutes from './routes/auth.js';
+import csvRoutes from './routes/csv.js';
+import eventRoutes from './routes/events.js';
+import { authMiddleware, optionalAuthMiddleware } from './middleware/auth.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { rateLimiter } from './middleware/rateLimiter.js';
+import { requestLogger } from './middleware/requestLogger.js';
 
 dotenv.config();
 
@@ -21,18 +21,33 @@ const PORT = process.env.PORT || 3001;
 
 app.set('trust proxy', 1);
 
+function normalizeOrigin(origin: string): string {
+  return origin.trim().replace(/\/+$/, '');
+}
+
 const frontendUrls = process.env.FRONTEND_URL?.trim();
-const allowedOrigins = frontendUrls
-  ? frontendUrls.split(',').map(origin => origin.trim()).filter(Boolean)
+const configuredOrigins = frontendUrls
+  ? frontendUrls.split(',').map(normalizeOrigin).filter(Boolean)
   : [];
-const allowAllOrigins = allowedOrigins.includes('*') || allowedOrigins.length === 0;
-const vercelOriginPatterns = [
-  /^https:\/\/forge-[a-z0-9-]+\.vercel\.app$/i,
-  /^https:\/\/forge-[a-z0-9-]+-raghavbhardwaj305-8776s-projects\.vercel\.app$/i
+const defaultAllowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:8080',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:8080'
+];
+const allowedOrigins = new Set([...defaultAllowedOrigins, ...configuredOrigins]);
+const allowAllOrigins = allowedOrigins.has('*') || process.env.CORS_ALLOW_ALL === 'true';
+const allowVercelPreviews = process.env.ALLOW_VERCEL_PREVIEWS !== 'false';
+const allowedOriginPatterns = [
+  /^http:\/\/localhost:\d+$/i,
+  /^http:\/\/127\.0\.0\.1:\d+$/i,
+  ...(allowVercelPreviews ? [/^https:\/\/[a-z0-9-]+\.vercel\.app$/i] : [])
 ];
 
 if (!frontendUrls) {
-  console.warn('WARNING: FRONTEND_URL is not configured; CORS will allow all origins.');
+  console.warn('WARNING: FRONTEND_URL is not configured; only localhost and Vercel preview origins are enabled by default.');
 }
 
 app.use(helmet({
@@ -41,24 +56,34 @@ app.use(helmet({
 
 app.use(compression());
 
-app.use(cors({
+const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    const isVercelPreview = typeof origin === 'string' && vercelOriginPatterns.some(pattern => pattern.test(origin));
-    if (!origin || allowAllOrigins || allowedOrigins.includes(origin) || isVercelPreview) {
+    const normalizedOrigin = typeof origin === 'string' ? normalizeOrigin(origin) : origin;
+    const isPatternAllowed =
+      typeof normalizedOrigin === 'string' &&
+      allowedOriginPatterns.some(pattern => pattern.test(normalizedOrigin));
+
+    if (!normalizedOrigin || allowAllOrigins || allowedOrigins.has(normalizedOrigin) || isPatternAllowed) {
       return callback(null, true);
     }
 
     const allowedMsg = [
-      ...allowedOrigins,
-      'Vercel previews: https://forge-<name>.vercel.app'
+      ...Array.from(allowedOrigins).filter(item => item !== '*'),
+      ...(allowVercelPreviews ? ['Vercel previews: https://<deployment>.vercel.app'] : [])
     ].join(', ');
-    console.warn(`Blocked CORS origin: ${origin}. Allowed: ${allowedMsg}`);
-    return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+    console.warn(`Blocked CORS origin: ${normalizedOrigin}. Allowed: ${allowedMsg}`);
+    const error = new Error(`Origin ${normalizedOrigin} is not allowed by CORS`);
+    (error as any).status = 403;
+    return callback(error);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

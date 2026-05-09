@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { prisma } from '../db/prisma';
-import { normalizeConfig } from '../config/normalizer';
-import { VersionManager } from '../config/versionManager';
-import { eventBus } from '../events/eventBus';
+import { prisma } from '../db/prisma.js';
+import { normalizeConfig } from '../config/normalizer.js';
+import { VersionManager } from '../config/versionManager.js';
+import { eventBus } from '../events/eventBus.js';
 
 const router = Router();
 
@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
     const total = await prisma.appConfig.count({ where: { is_active: true } });
 
     return res.json({
-      data: configs.map((item) => ({
+      data: configs.map((item: any) => ({
         id: item.id,
         name: item.name,
         slug: item.slug,

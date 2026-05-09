@@ -1,4 +1,4 @@
-import { EngineContext } from '../types';
+import { EngineContext } from '../types.js';
 import jwt from 'jsonwebtoken';
 
 export async function authenticate(ctx: EngineContext): Promise<EngineContext> {

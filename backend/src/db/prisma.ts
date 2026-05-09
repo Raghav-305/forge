@@ -1,15 +1,28 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import 'dotenv/config'
+import { createRequire } from 'module'
+import { PrismaNeon } from '@prisma/adapter-neon'
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const require = createRequire(import.meta.url)
+const { PrismaClient } = require('../generated/prisma')
+
+const databaseUrl = process.env.DATABASE_URL
+
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL is required to start the backend.')
+}
+
+const adapter = new PrismaNeon({
+  connectionString: databaseUrl,
+})
+
+const globalForPrisma = global as unknown as { prisma: typeof PrismaClient };
 const shouldLogQueries = process.env.PRISMA_QUERY_LOGS === 'true';
-const logLevels: Prisma.LogLevel[] = shouldLogQueries
-  ? ['query', 'info', 'warn', 'error']
-  : ['warn', 'error'];
 
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: logLevels,
+    adapter,
+    log: shouldLogQueries ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
     errorFormat: 'pretty'
   });
 

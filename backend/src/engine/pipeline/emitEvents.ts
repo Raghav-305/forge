@@ -1,6 +1,6 @@
-import { EngineContext } from '../types';
-import { eventBus } from '../../events/eventBus';
-import { prisma } from '../../db/prisma';
+import { EngineContext } from '../types.js';
+import { eventBus } from '../../events/eventBus.js';
+import { prisma } from '../../db/prisma.js';
 
 export async function emitEvents(ctx: EngineContext): Promise<EngineContext> {
   const events = [];

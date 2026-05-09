@@ -1,5 +1,5 @@
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
-const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_TIMEOUT_MS = 30000;
 
 export function getAuthHeaders(): Record<string, string> {
   const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') : null;
@@ -14,6 +14,11 @@ async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}
   } catch (error: any) {
     if (error?.name === 'AbortError') {
       throw new Error('Request timed out. The backend did not respond in time.');
+    }
+    if (error instanceof TypeError) {
+      throw new Error(
+        `Could not reach the backend at ${API_BASE_URL}. If the browser console mentions CORS, add this frontend origin to FRONTEND_URL on Render and redeploy.`
+      );
     }
     throw error;
   } finally {

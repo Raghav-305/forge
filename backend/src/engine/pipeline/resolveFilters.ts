@@ -1,4 +1,4 @@
-import { EngineContext } from '../types';
+import { EngineContext } from '../types.js';
 
 export async function resolveFilters(ctx: EngineContext): Promise<EngineContext> {
   const entity = ctx.config.entities?.find((e: any) => e.slug === ctx.input.entity);

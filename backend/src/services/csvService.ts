@@ -1,6 +1,6 @@
 import csv from 'csv-parser';
 import { Readable } from 'stream';
-import { inferFieldType } from '../config/normalizer';
+import { inferFieldType } from '../config/normalizer.js';
 
 export interface CSVColumn {
   name: string;
@@ -115,7 +115,7 @@ export class CSVService {
     entitySlug: string,
     userId?: string
   ): Promise<{ success: number; errors: number; errorDetails: any[] }> {
-    const { prisma } = await import('../db/prisma');
+    const { prisma } = await import('../db/prisma.js');
 
     let successCount = 0;
     let errorCount = 0;

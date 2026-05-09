@@ -1,13 +1,13 @@
 import { EventEmitter } from 'events';
-import { EngineContext } from './types';
-import { EngineError } from './EngineError';
-import { authenticate } from './pipeline/authenticate';
-import { authorize } from './pipeline/authorize';
-import { resolveFilters } from './pipeline/resolveFilters';
-import { executeDB } from './pipeline/executeDB';
-import { maskSensitive } from './pipeline/maskSensitive';
-import { emitEvents } from './pipeline/emitEvents';
-import { safeModeHandler } from './safeMode/safeModeHandler';
+import { EngineContext } from './types.js';
+import { EngineError } from './EngineError.js';
+import { authenticate } from './pipeline/authenticate.js';
+import { authorize } from './pipeline/authorize.js';
+import { resolveFilters } from './pipeline/resolveFilters.js';
+import { executeDB } from './pipeline/executeDB.js';
+import { maskSensitive } from './pipeline/maskSensitive.js';
+import { emitEvents } from './pipeline/emitEvents.js';
+import { safeModeHandler } from './safeMode/safeModeHandler.js';
 
 export class Engine extends EventEmitter {
   private pipeline: Array<(ctx: EngineContext) => Promise<EngineContext>>;
@@ -54,7 +54,7 @@ export class Engine extends EventEmitter {
             hasErrors: ctx.errors.length > 0
           });
 
-          if (ctx.errors.some(e => e.fatal)) {
+          if (ctx.errors.some((e: any) => e.fatal)) {
             if (this.safeMode) {
               ctx = await safeModeHandler(ctx);
             } else {
