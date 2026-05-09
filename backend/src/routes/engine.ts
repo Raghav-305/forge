@@ -11,6 +11,8 @@ router.post('/', async (req, res) => {
   const startTime = Date.now();
 
   try {
+    console.log('[Engine] POST request received, body keys:', Object.keys(req.body));
+    
     const {
       configSlug,
       action,
@@ -24,7 +26,10 @@ router.post('/', async (req, res) => {
       safeMode = false
     } = req.body;
 
+    console.log('[Engine] Parsed request - configSlug:', configSlug, 'action:', action, 'entity:', entity);
+
     if (!configSlug) {
+      console.error('[Engine] Missing configSlug');
       return res.status(400).json({
         error: 'Missing required field: configSlug',
         timestamp: new Date().toISOString()
@@ -32,12 +37,14 @@ router.post('/', async (req, res) => {
     }
 
     if (!action) {
+      console.error('[Engine] Missing action');
       return res.status(400).json({
         error: 'Missing required field: action',
         timestamp: new Date().toISOString()
       });
     }
 
+    console.log('[Engine] Fetching config record for slug:', configSlug);
     const configRecord = await prisma.appConfig.findFirst({
       where: {
         slug: configSlug,
@@ -46,9 +53,11 @@ router.post('/', async (req, res) => {
     });
 
     if (!configRecord) {
+      console.error('[Engine] Config not found for slug:', configSlug);
       const anyVersion = await prisma.appConfig.findFirst({ where: { slug: configSlug } });
 
       if (anyVersion) {
+        console.log('[Engine] Inactive version exists, suggesting activation');
         return res.status(404).json({
           error: `No active version found for config ${configSlug}`,
           availableVersions: await VersionManager.getVersionHistory(configSlug),
@@ -62,9 +71,11 @@ router.post('/', async (req, res) => {
       });
     }
 
+    console.log('[Engine] Config found, creating engine instance, config type:', typeof configRecord.config);
     const engine = new Engine(configRecord.config, safeMode);
     const events: any[] = [];
     engine.on('step-completed', (data) => {
+      console.log('[Engine] Step completed:', data?.type);
       events.push(data);
     });
 
@@ -90,7 +101,9 @@ router.post('/', async (req, res) => {
       ip: req.ip
     };
 
+    console.log('[Engine] Running engine with action:', action, 'entity:', entity);
     const result = await engine.run(engineReq);
+    console.log('[Engine] Engine execution completed, result keys:', Object.keys(result || {}));
     const duration = Date.now() - startTime;
 
     eventBus.emit('engine.execution', {
@@ -103,6 +116,7 @@ router.post('/', async (req, res) => {
       safeMode
     });
 
+    console.log('[Engine] Returning success response, data count:', Array.isArray(result.data) ? result.data.length : 'N/A');
     return res.json({
       success: true,
       data: result.data,
@@ -117,8 +131,10 @@ router.post('/', async (req, res) => {
     });
   } catch (error: any) {
     const duration = Date.now() - startTime;
+    console.error('[Engine] ERROR during execution:', error?.message, 'stack:', error?.stack);
 
     if (error instanceof EngineError) {
+      console.error('[Engine] EngineError with errors:', error.errors?.length, 'first error code:', error.errors?.[0]?.code);
       const firstErrorCode = error.errors?.[0]?.code;
       const status = firstErrorCode === 'UNAUTHORIZED'
         ? 401

@@ -21,31 +21,42 @@ const FieldRow = memo(function FieldRow({
   value: string;
   setFieldValue: (key: string, value: string) => void;
 }) {
+  console.log('[FieldRow] Rendering field:', field?.key, 'type:', field?.type, 'value:', value);
+  
   return (
-    <div className={field.type === "textarea" ? "sm:col-span-2" : ""}>
+    <div className={field?.type === "textarea" ? "sm:col-span-2" : ""}>
       <Label className="mb-1.5 block text-xs">
-        {field.label}
-        {field.required && <span className="text-primary"> *</span>}
+        {field?.label}
+        {field?.required && <span className="text-primary"> *</span>}
       </Label>
-      {field.type === "textarea" ? (
+      {field?.type === "textarea" ? (
         <Textarea
           value={value}
-          onChange={(e) => setFieldValue(field.key, e.target.value)}
-          required={field.required}
+          onChange={(e) => {
+            console.log('[FieldRow] Textarea changed:', field?.key, 'new value:', e.target.value);
+            setFieldValue(field?.key, e.target.value);
+          }}
+          required={field?.required}
         />
-      ) : field.type === "select" ? (
-        <Select onValueChange={(v) => setFieldValue(field.key, v)} value={value}>
+      ) : field?.type === "select" ? (
+        <Select onValueChange={(v) => {
+          console.log('[FieldRow] Select changed:', field?.key, 'new value:', v);
+          setFieldValue(field?.key, v);
+        }} value={value}>
           <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
           <SelectContent>
-            {(field.options ?? []).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+            {(field?.options ?? []).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
           </SelectContent>
         </Select>
       ) : (
         <Input
-          type={field.type ?? "text"}
+          type={field?.type ?? "text"}
           value={value}
-          onChange={(e) => setFieldValue(field.key, e.target.value)}
-          required={field.required}
+          onChange={(e) => {
+            console.log('[FieldRow] Input changed:', field?.key, 'new value:', e.target.value);
+            setFieldValue(field?.key, e.target.value);
+          }}
+          required={field?.required}
         />
       )}
     </div>

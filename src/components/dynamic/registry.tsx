@@ -34,20 +34,45 @@ function Fallback({ type }: { type: string }) {
 
 export function RenderComponent({ config, configSlug }: RenderProps) {
   try {
-    console.log('[RenderComponent] Rendering component:', config?.type, 'id:', config?.id, 'title:', config?.title);
+    console.log('[RenderComponent] START - type:', config?.type, 'id:', config?.id);
     
     if (!config) {
       console.error('[RenderComponent] No config provided');
       return <Fallback type="unknown" />;
     }
     
+    console.log('[RenderComponent] Config exists, looking for renderer for type:', config.type);
     const Comp = registry[config.type];
-    console.log('[RenderComponent] Found renderer:', !!Comp, 'for type:', config.type);
+    console.log('[RenderComponent] Renderer found:', !!Comp, 'type:', config.type);
+    
+    if (!Comp) {
+      console.warn('[RenderComponent] No renderer for type:', config.type);
+      return <Fallback type={config.type} />;
+    }
+    
+    console.log('[RenderComponent] About to render component wrapped in ErrorBoundary');
     
     return (
       <ErrorBoundary label={config.title ?? config.type}>
-        {Comp ? <Comp config={config} configSlug={configSlug} /> : <Fallback type={config.type} />}
+        {(() => {
+          console.log('[RenderComponent] Inside ErrorBoundary, rendering Comp');
+          return <Comp config={config} configSlug={configSlug} />;
+        })()}
       </ErrorBoundary>
+    );
+  } catch (err) {
+    console.error('[RenderComponent] CRITICAL ERROR:', err, 'config:', config);
+    return (
+      <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm">
+        <AlertTriangle className="mt-0.5 h-4 w-4 text-destructive" />
+        <div>
+          <p className="font-medium">Error rendering component</p>
+          <p className="text-xs text-muted-foreground">{String(err)}</p>
+        </div>
+      </div>
+    );
+  }
+}
     );
   } catch (err) {
     console.error('[RenderComponent] Error:', err);
