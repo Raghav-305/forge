@@ -4,8 +4,25 @@ import { prisma } from '../db/prisma.js';
 import { eventBus } from '../events/eventBus.js';
 import { EngineError } from '../engine/EngineError.js';
 import { VersionManager } from '../config/versionManager.js';
+import type { AppConfig } from '../generated/prisma/index.js';
 
 const router = Router();
+
+const ENGINE_QUERY_TIMEOUT_MS = 15_000;
+
+function rejectAfter(ms: number): Promise<never> {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      const err = new Error('Query timeout');
+      err.name = 'AbortError';
+      reject(err);
+    }, ms);
+  });
+}
+
+function withEngineTimeout<T>(promise: Promise<T>): Promise<T> {
+  return Promise.race([promise, rejectAfter(ENGINE_QUERY_TIMEOUT_MS)]);
+}
 
 router.post('/', async (req, res) => {
   const startTime = Date.now();
@@ -45,22 +62,26 @@ router.post('/', async (req, res) => {
     }
 
     console.log('[Engine] Fetching config record for slug:', configSlug);
-    const configRecord = await prisma.appConfig.findFirst({
-      where: {
-        slug: configSlug,
-        is_active: true
-      }
-    });
+    const configRecord: AppConfig | null = await withEngineTimeout(
+      prisma.appConfig.findFirst({
+        where: {
+          slug: configSlug,
+          is_active: true
+        }
+      })
+    );
 
     if (!configRecord) {
       console.error('[Engine] Config not found for slug:', configSlug);
-      const anyVersion = await prisma.appConfig.findFirst({ where: { slug: configSlug } });
+      const anyVersion = await withEngineTimeout(
+        prisma.appConfig.findFirst({ where: { slug: configSlug } })
+      );
 
       if (anyVersion) {
         console.log('[Engine] Inactive version exists, suggesting activation');
         return res.status(404).json({
           error: `No active version found for config ${configSlug}`,
-          availableVersions: await VersionManager.getVersionHistory(configSlug),
+          availableVersions: await withEngineTimeout(VersionManager.getVersionHistory(configSlug)),
           suggestion: 'Activate a version or create a new one'
         });
       }
@@ -102,7 +123,7 @@ router.post('/', async (req, res) => {
     };
 
     console.log('[Engine] Running engine with action:', action, 'entity:', entity);
-    const result = await engine.run(engineReq);
+    const result = await withEngineTimeout(engine.run(engineReq));
     console.log('[Engine] Engine execution completed, result keys:', Object.keys(result || {}));
     const duration = Date.now() - startTime;
 
@@ -131,6 +152,16 @@ router.post('/', async (req, res) => {
     });
   } catch (error: any) {
     const duration = Date.now() - startTime;
+
+    if (error?.name === 'AbortError') {
+      console.error('[Engine] Query timeout after', ENGINE_QUERY_TIMEOUT_MS, 'ms');
+      return res.status(408).json({
+        success: false,
+        error: 'Query timeout - reduce data size or paginate',
+        timestamp: new Date().toISOString()
+      });
+    }
+
     console.error('[Engine] ERROR during execution:', error?.message, 'stack:', error?.stack);
 
     if (error instanceof EngineError) {

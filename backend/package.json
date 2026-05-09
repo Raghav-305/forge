@@ -6,8 +6,9 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts,json --exec tsx src/server.ts",
-    "build": "prisma generate && tsc && node scripts/copy-generated-prisma.mjs",
-    "start": "npm run db:deploy && node dist/server.js",
+    "build:app": "prisma generate && tsc && node scripts/copy-generated-prisma.mjs",
+    "build": "npm run build:app && npm run db:deploy",
+    "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",

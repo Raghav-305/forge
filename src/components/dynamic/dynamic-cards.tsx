@@ -4,9 +4,7 @@ import { EmptyState } from "@/components/states";
 import { TrendingUp } from "lucide-react";
 
 export function DynamicCards({ config }: { config: ComponentConfig; configSlug?: string }) {
-  console.log('[DynamicCards] START - id:', config.id);
   const cards = config.cards ?? [];
-  console.log('[DynamicCards] Total cards:', cards.length);
   
   if (cards.length === 0) {
     return <EmptyState label="No cards configured" />;

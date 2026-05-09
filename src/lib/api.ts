@@ -38,7 +38,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
 export async function apiGet<T>(path: string): Promise<T> {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const url = `${API_BASE_URL}${normalizedPath}`;
-  console.log('[API] GET', url);
   
   try {
     const response = await fetchWithTimeout(url, {
@@ -47,18 +46,14 @@ export async function apiGet<T>(path: string): Promise<T> {
       }
     });
 
-    console.log('[API] Response status:', response.status, 'for', url);
-
     if (!response.ok) {
       const errorBody = await handleResponse<{ error?: string }>(response);
       throw new Error(errorBody.error || `Request failed with status ${response.status}`);
     }
 
     const data = await handleResponse<T>(response);
-    console.log('[API] Response data:', data);
     return data;
   } catch (error) {
-    console.error('[API] Error fetching', url, error);
     throw error;
   }
 }
@@ -66,7 +61,6 @@ export async function apiGet<T>(path: string): Promise<T> {
 export async function apiPost<T>(path: string, body: any): Promise<T> {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const url = `${API_BASE_URL}${normalizedPath}`;
-  console.log('[API] POST', url, 'body:', body);
   
   try {
     const response = await fetchWithTimeout(url, {
@@ -78,19 +72,15 @@ export async function apiPost<T>(path: string, body: any): Promise<T> {
     body: JSON.stringify(body)
   });
 
-    console.log('[API] POST Response status:', response.status);
     if (!response.ok) {
       const errorBody = await handleResponse<{ error?: string }>(response);
       const errorMsg = errorBody.error || `Request failed with status ${response.status}`;
-      console.error('[API] POST Error:', errorMsg);
       throw new Error(errorMsg);
     }
 
     const data = await handleResponse<T>(response);
-    console.log('[API] POST Response data:', data);
     return data;
   } catch (error) {
-    console.error('[API] POST Error:', url, error);
     throw error;
   }
 }

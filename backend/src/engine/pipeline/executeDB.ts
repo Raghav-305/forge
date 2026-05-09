@@ -9,7 +9,12 @@ export async function executeDB(ctx: EngineContext): Promise<EngineContext> {
     const startTime = Date.now();
 
     switch (action) {
-      case 'list':
+      case 'list': {
+        const skip = Math.max(0, Number(ctx.query.skip) || 0);
+        const take = Math.min(Number(ctx.query.take) || 50, 500);
+        ctx.query.skip = skip;
+        ctx.query.take = take;
+
         ctx.result = await prisma.appData.findMany({
           where: {
             config_slug,
@@ -17,17 +22,18 @@ export async function executeDB(ctx: EngineContext): Promise<EngineContext> {
             entity_slug: entity,
             ...ctx.query.where
           },
-          skip: ctx.query.skip,
-          take: ctx.query.take,
+          skip,
+          take,
           orderBy: ctx.query.orderBy
         });
 
         ctx.metadata.pagination = {
-          skip: ctx.query.skip,
-          take: ctx.query.take,
-          hasMore: Array.isArray(ctx.result) && ctx.result.length === ctx.query.take
+          skip,
+          take,
+          hasMore: Array.isArray(ctx.result) && ctx.result.length === take
         };
         break;
+      }
 
       case 'get':
         ctx.result = await prisma.appData.findFirst({

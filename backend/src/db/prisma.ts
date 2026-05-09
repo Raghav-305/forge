@@ -16,13 +16,17 @@ const adapter = new PrismaNeon({
 })
 
 const globalForPrisma = global as unknown as { prisma: typeof PrismaClient };
-const shouldLogQueries = process.env.PRISMA_QUERY_LOGS === 'true';
+
+const prismaLogLevels =
+  process.env.NODE_ENV === 'development' || process.env.PRISMA_QUERY_LOGS === 'true'
+    ? (['query', 'error', 'warn'] as const)
+    : (['error'] as const);
 
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter,
-    log: shouldLogQueries ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
+    log: [...prismaLogLevels],
     errorFormat: 'pretty'
   });
 

@@ -25,23 +25,18 @@ function AppViewer() {
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const activePage = activePageId ? pages.find((p) => p.id === activePageId) : undefined;
 
-  useEffect(() => {
-    console.log('[AppViewer] Component mounted with id:', id, 'loading:', loading, 'error:', error, 'app:', app);
-  }, [id, loading, error, app]);
+  useEffect(() => {}, [id, loading, error, app]);
 
   useEffect(() => {
     if (!pages.length) {
-      console.log('[AppViewer] No pages found, clearing activePageId');
       setActivePageId(null);
       return;
     }
-    console.log('[AppViewer] Pages updated:', pages.length, 'pages');
     setActivePageId((prev) => (prev && pages.some((p) => p.id === prev) ? prev : pages[0].id));
   }, [pageIds, pages]);
 
   if (loading) return <div className="p-8"><LoadingState label="Loading app config…" /></div>;
   if (error) {
-    console.error('[AppViewer] Error state:', error);
     return (
       <div className="p-10">
         <Card className="glass-panel p-6">
@@ -56,7 +51,6 @@ function AppViewer() {
     );
   }
   if (!app) {
-    console.warn('[AppViewer] App is null after loading');
     return (
       <div className="p-10 text-center">
         <h1 className="text-xl font-semibold">App not found</h1>
@@ -65,8 +59,6 @@ function AppViewer() {
       </div>
     );
   }
-
-  console.log('[AppViewer] Rendering app view with', pages.length, 'pages');
   
   return (
     <div className="min-h-screen" style={getAppStyle(app)}>
@@ -115,17 +107,9 @@ function AppViewer() {
             <section className="space-y-6">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{activePage.title}</h2>
               <div className={layoutClass(activePage.layout)}>
-                {(activePage.components ?? []).map((c) => {
-                  try {
-                    console.log('[AppViewer] About to render component:', c?.type, 'id:', c?.id, 'config:', c);
-                    return (
-                      <RenderComponent key={c.id} config={c} configSlug={configSlug} />
-                    );
-                  } catch (err) {
-                    console.error('[AppViewer] Error rendering component:', c?.id, err);
-                    return <div key={c.id} className="text-red-500 text-sm">Error rendering {c?.type}</div>;
-                  }
-                })}
+                {(activePage.components ?? []).map((c) => (
+                  <RenderComponent key={c.id} config={c} configSlug={configSlug} />
+                ))}
               </div>
             </section>
           ) : null}

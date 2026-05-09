@@ -21,19 +21,13 @@ export function DynamicTable({
   configSlug?: string;
 }) {
   try {
-    console.log('[DynamicTable] START - id:', config.id, 'dataSource:', config.dataSource);
     const { data, loading, error } = useEngineData(config.dataSource, configSlug);
-    console.log('[DynamicTable] useEngineData completed - data count:', data?.length, 'loading:', loading, 'error:', error?.message);
     
     const cols = config.columns ?? [];
-    console.log('[DynamicTable] Columns configured:', cols.length);
     
     const visibleRows = (data ?? []).slice(0, MAX_RENDERED_ROWS);
     const hiddenRows = Math.max((data?.length ?? 0) - visibleRows.length, 0);
-    console.log('[DynamicTable] Visible rows:', visibleRows.length, 'Hidden rows:', hiddenRows);
 
-    console.log('[DynamicTable] About to render JSX, loading:', loading, 'error:', error, 'hasData:', !!data, 'dataLength:', data?.length);
-    
     return (
       <Card className="glass-panel overflow-hidden p-0">
         <div className="border-b border-border/60 px-5 py-4">
@@ -65,21 +59,15 @@ export function DynamicTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleRows.map((row: any, rowIdx: number) => {
-                    console.log('[DynamicTable] Rendering table row:', rowIdx, 'row keys:', Object.keys(row || {}));
-                    return (
-                      <TableRow key={String(row?.id ?? row?._id ?? rowIdx)} className="border-border/40">
-                        {cols.map((c) => {
-                          console.log('[DynamicTable] Rendering cell - column:', c.key, 'value:', row?.[c.key]);
-                          return (
-                            <TableCell key={c.key} className="text-sm">
-                              {String(row?.[c.key] ?? "-")}
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-                    );
-                  })}
+                  {visibleRows.map((row: any, rowIdx: number) => (
+                    <TableRow key={String(row?.id ?? row?._id ?? rowIdx)} className="border-border/40">
+                      {cols.map((c) => (
+                        <TableCell key={c.key} className="text-sm">
+                          {String(row?.[c.key] ?? "-")}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
               {hiddenRows > 0 ? (
@@ -93,7 +81,6 @@ export function DynamicTable({
       </Card>
     );
   } catch (err) {
-    console.error('[DynamicTable] ERROR:', err);
     throw err;
   }
 }

@@ -171,13 +171,12 @@ async function startServer() {
 }
 
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, closing server...');
+  console.log('SIGTERM received, closing gracefully...');
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, closing server...');
   await prisma.$disconnect();
   process.exit(0);
 });

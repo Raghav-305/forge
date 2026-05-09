@@ -30,7 +30,7 @@ export async function resolveFilters(ctx: EngineContext): Promise<EngineContext>
   }
 
   ctx.query.skip = Math.max(0, ctx.input.skip || 0);
-  ctx.query.take = Math.min(ctx.input.take || 50, 100);
+  ctx.query.take = Math.min(ctx.input.take || 50, 500);
 
   if (ctx.input.sortBy) {
     ctx.query.orderBy[ctx.input.sortBy] = ctx.input.sortOrder || 'desc';
