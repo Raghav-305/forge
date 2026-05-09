@@ -23,6 +23,16 @@ const FieldRow = memo(function FieldRow({
 }) {
   console.log('[FieldRow] Rendering field:', field?.key, 'type:', field?.type, 'value:', value);
   
+  const handleChange = (newValue: string) => {
+    try {
+      console.log('[FieldRow] handleChange START - field:', field?.key, 'new value:', newValue);
+      setFieldValue(field?.key, newValue);
+      console.log('[FieldRow] handleChange COMPLETE');
+    } catch (err) {
+      console.error('[FieldRow] handleChange ERROR:', err);
+    }
+  };
+  
   return (
     <div className={field?.type === "textarea" ? "sm:col-span-2" : ""}>
       <Label className="mb-1.5 block text-xs">
@@ -32,17 +42,11 @@ const FieldRow = memo(function FieldRow({
       {field?.type === "textarea" ? (
         <Textarea
           value={value}
-          onChange={(e) => {
-            console.log('[FieldRow] Textarea changed:', field?.key, 'new value:', e.target.value);
-            setFieldValue(field?.key, e.target.value);
-          }}
+          onChange={(e) => handleChange(e.target.value)}
           required={field?.required}
         />
       ) : field?.type === "select" ? (
-        <Select onValueChange={(v) => {
-          console.log('[FieldRow] Select changed:', field?.key, 'new value:', v);
-          setFieldValue(field?.key, v);
-        }} value={value}>
+        <Select onValueChange={handleChange} value={value}>
           <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
           <SelectContent>
             {(field?.options ?? []).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
@@ -52,10 +56,7 @@ const FieldRow = memo(function FieldRow({
         <Input
           type={field?.type ?? "text"}
           value={value}
-          onChange={(e) => {
-            console.log('[FieldRow] Input changed:', field?.key, 'new value:', e.target.value);
-            setFieldValue(field?.key, e.target.value);
-          }}
+          onChange={(e) => handleChange(e.target.value)}
           required={field?.required}
         />
       )}
@@ -80,13 +81,26 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
   }
 
   const set = useCallback((k: string, v: string) => {
-    setValues((p) => (p[k] === v ? p : { ...p, [k]: v }));
+    console.log('[DynamicForm.set] START - key:', k, 'value:', v);
+    try {
+      setValues((p) => {
+        const newVals = p[k] === v ? p : { ...p, [k]: v };
+        console.log('[DynamicForm.set] State updated, new keys:', Object.keys(newVals));
+        return newVals;
+      });
+      console.log('[DynamicForm.set] COMPLETE');
+    } catch (err) {
+      console.error('[DynamicForm.set] ERROR:', err);
+    }
   }, []);
 
   const submit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('[DynamicForm] Submit triggered');
-    if (saving) return;
+    if (saving) {
+      console.warn('[DynamicForm] Already saving, ignoring submit');
+      return;
+    }
 
     const source = config.dataSource;
     if (!source) {
@@ -117,6 +131,8 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
     }
   }, [config.dataSource, configSlug, saving, values]);
 
+  console.log('[DynamicForm] About to render form JSX with', fields.length, 'fields');
+  
   return (
     <Card className="glass-panel p-5">
       <div className="mb-4">
@@ -141,7 +157,7 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
           );
         })}
         <div className="sm:col-span-2 flex justify-end">
-          <Button disabled={saving} type="submit" className="bg-gradient-to-r from-primary to-[oklch(0.55_0.22_268)]">
+          <Button disabled={saving} type="submit" className="bg-gradient-to-r from-primary to-primary/80">
             {saving ? "Saving..." : "Submit"}
           </Button>
         </div>

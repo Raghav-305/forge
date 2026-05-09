@@ -95,7 +95,6 @@ function AppViewer() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {console.log('[AppViewer] Rendering', pages.length, 'page tabs')}
           <Card className="glass-panel p-3">
             <div className="flex flex-wrap gap-2">
               {pages.map((p) => (
@@ -104,7 +103,7 @@ function AppViewer() {
                   variant={p.id === activePageId ? "default" : "outline"}
                   size="sm"
                   onClick={() => setActivePageId(p.id)}
-                  className={p.id === activePageId ? "bg-gradient-to-r from-primary to-[oklch(0.55_0.22_268)]" : ""}
+                  className={p.id === activePageId ? "bg-gradient-to-r from-primary to-primary/80" : ""}
                 >
                   {p.title}
                 </Button>
@@ -114,7 +113,6 @@ function AppViewer() {
 
           {activePage ? (
             <section className="space-y-6">
-              {console.log('[AppViewer] Rendering active page:', activePage?.id, 'with', activePage?.components?.length ?? 0, 'components')}
               <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">{activePage.title}</h2>
               <div className={layoutClass(activePage.layout)}>
                 {(activePage.components ?? []).map((c) => {
