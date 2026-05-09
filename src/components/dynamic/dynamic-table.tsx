@@ -63,15 +63,21 @@ export function DynamicTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleRows.map((row: any) => (
-                    <TableRow key={String(row.id ?? row._id)} className="border-border/40">
-                      {cols.map((c) => (
-                        <TableCell key={c.key} className="text-sm">
-                          {String(row[c.key] ?? "-")}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
+                  {visibleRows.map((row: any, rowIdx: number) => {
+                    console.log('[DynamicTable] Rendering table row:', rowIdx, 'row keys:', Object.keys(row || {}));
+                    return (
+                      <TableRow key={String(row?.id ?? row?._id ?? rowIdx)} className="border-border/40">
+                        {cols.map((c) => {
+                          console.log('[DynamicTable] Rendering cell - column:', c.key, 'value:', row?.[c.key]);
+                          return (
+                            <TableCell key={c.key} className="text-sm">
+                              {String(row?.[c.key] ?? "-")}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
               {hiddenRows > 0 ? (

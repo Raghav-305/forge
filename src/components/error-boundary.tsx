@@ -23,6 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
   render() {
     if (this.state.error) {
+      console.error('[ErrorBoundary] Component error - Label:', this.props.label, 'Error:', this.state.error.message, 'Stack:', this.state.error.stack);
       return (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
           <div className="mb-1 flex items-center gap-2 font-medium text-destructive">
@@ -30,9 +31,18 @@ export class ErrorBoundary extends Component<Props, State> {
             {this.props.label ?? "Component"} failed to render
           </div>
           <code className="text-xs text-muted-foreground">{this.state.error.message}</code>
+          <details className="mt-2 text-xs">
+            <summary>Stack trace</summary>
+            <pre className="overflow-auto bg-black/20 p-2 rounded mt-1">{this.state.error.stack}</pre>
+          </details>
         </div>
       );
     }
-    return this.props.children;
+    try {
+      return this.props.children;
+    } catch (err) {
+      console.error('[ErrorBoundary] Unexpected error rendering children:', err);
+      throw err;
+    }
   }
 }

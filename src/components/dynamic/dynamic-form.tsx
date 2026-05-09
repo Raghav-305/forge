@@ -118,14 +118,17 @@ export function DynamicForm({ config, configSlug }: { config: ComponentConfig; c
         className="grid gap-4 sm:grid-cols-2"
         onSubmit={submit}
       >
-        {fields.map((f) => (
-          <FieldRow
-            key={f.key}
-            field={f}
-            value={values[f.key] ?? ""}
-            setFieldValue={set}
-          />
-        ))}
+        {fields.map((f, idx) => {
+          console.log('[DynamicForm] Rendering form field:', idx, 'key:', f?.key, 'type:', f?.type);
+          return (
+            <FieldRow
+              key={f?.key}
+              field={f}
+              value={values[f?.key] ?? ""}
+              setFieldValue={set}
+            />
+          );
+        })}
         <div className="sm:col-span-2 flex justify-end">
           <Button disabled={saving} type="submit" className="bg-gradient-to-r from-primary to-[oklch(0.55_0.22_268)]">
             {saving ? "Saving..." : "Submit"}
