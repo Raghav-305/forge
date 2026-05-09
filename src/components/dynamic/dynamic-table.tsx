@@ -36,56 +36,54 @@ export function DynamicTable({
       <Card className="glass-panel overflow-hidden p-0">
         <div className="border-b border-border/60 px-5 py-4">
           <h3 className="text-sm font-semibold tracking-tight">{config.title ?? "Table"}</h3>
-        {config.description ? (
-          <p className="text-xs text-muted-foreground">{config.description}</p>
-        ) : null}
-      </div>
-      <div className="p-4">
-        {loading ? (
-          <LoadingState label="Loading rows..." />
-        ) : error ? (
-          <EmptyState label={error.message} />
-        ) : !data || data.length === 0 ? (
-          <EmptyState label="No records found" />
-        ) : (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {cols.map((c, colIdx) => {
-                    console.log('[DynamicTable] Rendering column:', colIdx, 'key:', c.key);
-                    return (
+          {config.description ? (
+            <p className="text-xs text-muted-foreground">{config.description}</p>
+          ) : null}
+        </div>
+        <div className="p-4">
+          {loading ? (
+            <LoadingState label="Loading rows..." />
+          ) : error ? (
+            <EmptyState label={error.message} />
+          ) : !data || data.length === 0 ? (
+            <EmptyState label="No records found" />
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {cols.map((c) => (
                       <TableHead
                         key={c.key}
-                      className="text-xs uppercase tracking-wider text-muted-foreground"
-                    >
-                      {c.label}
+                        className="text-xs uppercase tracking-wider text-muted-foreground"
+                      >
+                        {c.label}
                       </TableHead>
-                    );})
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visibleRows.map((row, i) => (
-                  <TableRow key={String(row.id ?? row._id ?? i)} className="border-border/40">
-                    {cols.map((c) => (
-                      <TableCell key={c.key} className="text-sm">
-                        {String(row[c.key] ?? "-")}
-                      </TableCell>
                     ))}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {hiddenRows > 0 ? (
-              <p className="mt-3 text-xs text-muted-foreground">
-                Showing first {MAX_RENDERED_ROWS} rows. {hiddenRows} more rows are available.
-              </p>
-            ) : null}
-          </>
-        )}
-      </div>
-    </Card>
-  );
+                </TableHeader>
+                <TableBody>
+                  {visibleRows.map((row: any) => (
+                    <TableRow key={String(row.id ?? row._id)} className="border-border/40">
+                      {cols.map((c) => (
+                        <TableCell key={c.key} className="text-sm">
+                          {String(row[c.key] ?? "-")}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {hiddenRows > 0 ? (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Showing first {MAX_RENDERED_ROWS} rows. {hiddenRows} more rows are available.
+                </p>
+              ) : null}
+            </>
+          )}
+        </div>
+      </Card>
+    );
   } catch (err) {
     console.error('[DynamicTable] ERROR:', err);
     throw err;
