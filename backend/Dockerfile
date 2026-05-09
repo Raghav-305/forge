@@ -14,7 +14,10 @@ RUN npx prisma generate
 
 COPY . .
 
-RUN npm run build
+# Compile only — db:deploy needs DATABASE_URL and must not run during `docker build`
+# (Render env vars are available at runtime, not in the build stage). Run `npm run db:deploy`
+# once from the Render shell or a release job after the image is built.
+RUN npm run build:app
 
 FROM node:22-bookworm-slim
 
