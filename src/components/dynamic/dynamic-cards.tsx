@@ -4,13 +4,14 @@ import { EmptyState } from "@/components/states";
 import { TrendingUp } from "lucide-react";
 
 export function DynamicCards({ config }: { config: ComponentConfig; configSlug?: string }) {
-  try {
-    console.log('[DynamicCards] START - id:', config.id);
-    const cards = config.cards ?? [];
-    console.log('[DynamicCards] Total cards:', cards.length);
-    if (cards.length === 0) {
-      return <EmptyState label="No cards configured" />;
-    }
+  console.log('[DynamicCards] START - id:', config.id);
+  const cards = config.cards ?? [];
+  console.log('[DynamicCards] Total cards:', cards.length);
+  
+  if (cards.length === 0) {
+    return <EmptyState label="No cards configured" />;
+  }
+  
   return (
     <div>
       {config.title && (
@@ -19,9 +20,7 @@ export function DynamicCards({ config }: { config: ComponentConfig; configSlug?:
         </h3>
       )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((c, i) => {
-          console.log('[DynamicCards] Rendering card:', i, 'label:', c.label);
-          return (
+        {cards.map((c, i) => (
           <Card
             key={i}
             className="glass-panel relative overflow-hidden p-5 transition-transform hover:-translate-y-0.5"
