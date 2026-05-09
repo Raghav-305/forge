@@ -73,9 +73,3 @@ export function RenderComponent({ config, configSlug }: RenderProps) {
     );
   }
 }
-    );
-  } catch (err) {
-    console.error('[RenderComponent] Error:', err);
-    return <Fallback type={config?.type ?? 'unknown'} />;
-  }
-}
